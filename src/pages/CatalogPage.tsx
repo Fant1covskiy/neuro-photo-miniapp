@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Sparkles } from 'lucide-react';
 import { useTelegram } from '../hooks/useTelegram';
+import apiClient from '../api/client';
 
 interface Category {
   id: number;
@@ -49,9 +50,8 @@ export default function CatalogPage() {
 
   const loadCategories = async () => {
     try {
-      const response = await fetch('http://localhost:3000/categories');
-      const data = await response.json();
-      setCategories(data);
+      const response = await apiClient.get('/categories');
+      setCategories(response.data);
     } catch (error) {
       console.error('Error loading categories:', error);
     }
@@ -60,11 +60,10 @@ export default function CatalogPage() {
   const loadStyles = async (categoryId?: number) => {
     try {
       const url = categoryId 
-        ? `http://localhost:3000/styles?category_id=${categoryId}`
-        : 'http://localhost:3000/styles';
-      const response = await fetch(url);
-      const data = await response.json();
-      setStyles(data);
+        ? `/styles?category_id=${categoryId}`
+        : '/styles';
+      const response = await apiClient.get(url);
+      setStyles(response.data);
     } catch (error) {
       console.error('Error loading styles:', error);
       setStyles([]);

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { TrendingUp, ShoppingCart } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useTelegram } from '../hooks/useTelegram';
-
+import apiClient from '../api/client';
 
 interface Style {
   id: number;
@@ -14,14 +14,12 @@ interface Style {
   category_id: number;
 }
 
-
 const PLACEHOLDER_IMAGES = [
   'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=500&fit=crop',
   'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=500&fit=crop',
   'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=500&fit=crop',
   'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=500&fit=crop'
 ];
-
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -36,12 +34,10 @@ export default function HomePage() {
   const [currentPage, setCurrentPage] = useState(0);
   const searchRef = useRef<HTMLDivElement>(null);
 
-
   useEffect(() => {
     loadPopularStyles();
     loadAllStyles();
   }, []);
-
 
   useEffect(() => {
     if (tg) {
@@ -50,7 +46,6 @@ export default function HomePage() {
     }
   }, [tg]);
 
-
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
@@ -58,33 +53,27 @@ export default function HomePage() {
       }
     };
 
-
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-
   const loadPopularStyles = async () => {
     try {
-      const response = await fetch('http://localhost:3000/styles?limit=8');
-      const data = await response.json();
-      setStyles(data);
+      const response = await apiClient.get('/styles?limit=8');
+      setStyles(response.data);
     } catch (error) {
       console.error('Error loading styles:', error);
     }
   };
 
-
   const loadAllStyles = async () => {
     try {
-      const response = await fetch('http://localhost:3000/styles');
-      const data = await response.json();
-      setAllStyles(data);
+      const response = await apiClient.get('/styles');
+      setAllStyles(response.data);
     } catch (error) {
       console.error('Error loading all styles:', error);
     }
   };
-
 
   const handleSearchChange = (value: string) => {
     setSearchQuery(value);
@@ -103,14 +92,12 @@ export default function HomePage() {
     }
   };
 
-
   const handleSelectSuggestion = (style: Style) => {
     setSearchQuery('');
     setSuggestions([]);
     setShowSuggestions(false);
     navigate(`/style/${style.id}`);
   };
-
 
   const handleSearch = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -125,14 +112,12 @@ export default function HomePage() {
     }
   };
 
-
   const stylesPerPage = 4;
   const totalPages = Math.ceil(styles.length / stylesPerPage);
   const displayedStyles = styles.slice(
     currentPage * stylesPerPage,
     (currentPage + 1) * stylesPerPage
   );
-
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 pb-8">
@@ -142,7 +127,6 @@ export default function HomePage() {
           style={{backgroundImage: "url('https://images.unsplash.com/photo-1534088568595-a066f410bcda?w=1920&h=1080&fit=crop')"}}
         />
 
-
         <div className="relative z-10 h-full flex flex-col justify-center items-center text-center px-6">
           <h1 className="text-4xl font-black text-white mb-3 drop-shadow-2xl">
             {user ? `Привет, ${user.first_name}! 👋` : 'НейроФото'}
@@ -151,7 +135,6 @@ export default function HomePage() {
           <p className="text-base text-white/90 mb-6 max-w-md font-medium drop-shadow-lg">
             Создай фото в любом стиле за секунды с помощью нейросети
           </p>
-
 
           <form onSubmit={handleSearch} className="w-full max-w-md">
             <div ref={searchRef} className="relative mb-2.5">
@@ -197,7 +180,6 @@ export default function HomePage() {
           </form>
         </div>
 
-
         <div className="absolute bottom-0 left-0 right-0">
           <svg viewBox="0 0 1440 80" className="w-full h-auto">
             <path
@@ -207,7 +189,6 @@ export default function HomePage() {
           </svg>
         </div>
       </div>
-
 
       <div className="px-4 py-8 relative">
         <button
@@ -223,7 +204,6 @@ export default function HomePage() {
           )}
         </button>
 
-
         <div className="flex items-center gap-2.5 mb-6">
           <div className="w-10 h-10 bg-gradient-to-br from-orange-400 to-pink-500 rounded-xl flex items-center justify-center">
             <TrendingUp className="w-5 h-5 text-white" />
@@ -233,7 +213,6 @@ export default function HomePage() {
             <p className="text-gray-500 text-xs">Выбор пользователей</p>
           </div>
         </div>
-
 
         <div className="grid grid-cols-1 gap-3 mb-5">
           {displayedStyles.map((style, index) => (
@@ -267,7 +246,6 @@ export default function HomePage() {
           ))}
         </div>
 
-
         {totalPages > 1 && (
           <div className="flex justify-center items-center gap-2 mb-5">
             {Array.from({ length: totalPages }).map((_, idx) => (
@@ -285,7 +263,6 @@ export default function HomePage() {
             ))}
           </div>
         )}
-
 
         <button
           onClick={() => navigate('/catalog')}

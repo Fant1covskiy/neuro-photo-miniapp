@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft, ShoppingCart, Check } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import apiClient from '../api/client';
 
 interface Style {
   id: number;
@@ -35,9 +36,8 @@ export default function StylePage() {
 
   const loadStyle = async () => {
     try {
-      const response = await fetch(`http://localhost:3000/styles/${id}`);
-      const data = await response.json();
-      setStyle(data);
+      const response = await apiClient.get(`/styles/${id}`);
+      setStyle(response.data);
     } catch (error) {
       console.error('Error loading style:', error);
     }
