@@ -5,7 +5,7 @@ export default defineConfig({
   plugins: [react()],
   envPrefix: 'VITE_',
   define: {
-    'import.meta.env.VITE_API_URL': JSON.stringify(process.env.VITE_API_URL || 'http://localhost:3000')
+    'import.meta.env.VITE_API_URL': JSON.stringify('https://neuro-photo-backend-production.up.railway.app')
   },
   server: {
     port: 5174,
