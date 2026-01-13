@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Upload } from 'lucide-react';
+import { ChevronLeft, Upload, Building2, FileText } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 
 const PLACEHOLDER_IMAGES = [
@@ -67,6 +67,43 @@ export default function OrderPage() {
           ))}
         </div>
 
+        {/* Реквизиты ИП */}
+        <div className="bg-white rounded-2xl shadow-md p-6 mb-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-xl flex items-center justify-center">
+              <Building2 className="w-6 h-6 text-indigo-600" />
+            </div>
+            <div>
+              <h3 className="font-bold text-gray-800">Получатель платежа</h3>
+              <p className="text-gray-600 text-sm">Реквизиты продавца</p>
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-br from-indigo-50 via-purple-50 to-blue-50 rounded-xl p-4 space-y-3">
+            <div className="flex items-start gap-3">
+              <FileText className="w-5 h-5 text-indigo-600 mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-xs text-gray-600 mb-1">Наименование</p>
+                <p className="font-semibold text-gray-800">ИП Левтеров</p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3">
+              <FileText className="w-5 h-5 text-indigo-600 mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-xs text-gray-600 mb-1">ИНН</p>
+                <p className="font-mono font-semibold text-gray-800 tracking-wider">7817 2076 1466</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4 bg-blue-50 border border-blue-200 rounded-xl p-3">
+            <p className="text-xs text-blue-800 leading-relaxed">
+              💳 Оплата производится через систему быстрых платежей (СБП). Ваши данные защищены и не передаются третьим лицам.
+            </p>
+          </div>
+        </div>
+
         <div className="bg-white rounded-2xl shadow-md p-6 mb-6">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-12 h-12 bg-gradient-to-br from-purple-100 to-pink-100 rounded-xl flex items-center justify-center">
@@ -109,7 +146,7 @@ export default function OrderPage() {
           onClick={handleContinue}
           className="w-full py-4 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white rounded-2xl font-bold text-lg shadow-lg hover:shadow-xl transition-all transform hover:scale-[1.02] active:scale-[0.98]"
         >
-          Продолжить
+          Продолжить к оплате
         </button>
       </div>
     </div>
