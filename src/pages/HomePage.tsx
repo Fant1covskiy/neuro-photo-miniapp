@@ -24,8 +24,7 @@ const PLACEHOLDER_IMAGES = [
 export default function HomePage() {
   const navigate = useNavigate();
   const { cart } = useCart();
-  const itemCount = cart.length;
-  const { user, tg } = useTelegram();
+  const { tg } = useTelegram();
   const [styles, setStyles] = useState<Style[]>([]);
   const [allStyles, setAllStyles] = useState<Style[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -120,31 +119,43 @@ export default function HomePage() {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 pb-8">
-      <div className="relative h-[50vh] overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-pink-50">
+      {/* Кнопка корзины */}
+      <button
+        onClick={() => navigate('/cart')}
+        className="fixed top-4 right-4 z-50 bg-white px-3 py-2 rounded-full shadow-lg hover:shadow-xl transition-all flex items-center gap-1.5"
+      >
+        <ShoppingCart className="w-5 h-5 text-gray-700" />
+        {cart.length > 0 && (
+          <span className="text-gray-700 font-semibold text-sm">{cart.length}</span>
+        )}
+      </button>
+
+      {/* Героическая секция */}
+      <div className="relative h-[340px] overflow-hidden">
         <div 
           className="absolute inset-0 bg-cover bg-center" 
           style={{backgroundImage: "url('https://images.unsplash.com/photo-1534088568595-a066f410bcda?w=1920&h=1080&fit=crop')"}}
         />
 
         <div className="relative z-10 h-full flex flex-col justify-center items-center text-center px-6">
-          <h1 className="text-4xl font-black text-white mb-3 drop-shadow-2xl">
-            {user ? `Привет, ${user.first_name}! 👋` : 'НейроФото'}
+          <h1 className="text-3xl font-black text-white mb-2 drop-shadow-2xl">
+            НейроФото
           </h1>
 
-          <p className="text-base text-white/90 mb-6 max-w-md font-medium drop-shadow-lg">
+          <p className="text-sm text-white/90 mb-5 max-w-xs font-medium drop-shadow-lg">
             Создай фото в любом стиле за секунды с помощью нейросети
           </p>
 
-          <form onSubmit={handleSearch} className="w-full max-w-md">
-            <div ref={searchRef} className="relative mb-2.5">
+          <form onSubmit={handleSearch} className="w-full max-w-xs">
+            <div ref={searchRef} className="relative mb-2">
               <input
                 type="text"
                 placeholder="Поиск по стилям..."
                 value={searchQuery}
                 onChange={(e) => handleSearchChange(e.target.value)}
                 onFocus={() => searchQuery && setShowSuggestions(true)}
-                className="w-full px-4 py-3 bg-white/95 backdrop-blur-lg rounded-xl border-2 border-white/50 focus:border-white focus:outline-none shadow-xl text-gray-800 placeholder-gray-400 text-sm"
+                className="w-full px-4 py-2.5 bg-white/95 backdrop-blur-sm rounded-xl border border-white/50 focus:border-white focus:outline-none shadow-lg text-gray-800 placeholder-gray-400 text-sm"
               />
 
               {showSuggestions && suggestions.length > 0 && (
@@ -153,9 +164,9 @@ export default function HomePage() {
                     <div
                       key={style.id}
                       onClick={() => handleSelectSuggestion(style)}
-                      className="flex items-center gap-3 p-3 hover:bg-purple-50 cursor-pointer transition-colors border-b border-gray-100 last:border-b-0"
+                      className="flex items-center gap-3 p-3 hover:bg-blue-50 cursor-pointer transition-colors border-b border-gray-100 last:border-b-0"
                     >
-                      <div className="w-12 h-12 flex-shrink-0 rounded-lg overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
+                      <div className="w-12 h-12 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100">
                         <img
                           src={style.preview_image || PLACEHOLDER_IMAGES[index % PLACEHOLDER_IMAGES.length]}
                           alt={style.name}
@@ -164,7 +175,7 @@ export default function HomePage() {
                       </div>
                       <div className="flex-1">
                         <h4 className="font-semibold text-gray-800 text-sm">{style.name}</h4>
-                        <p className="text-purple-600 font-bold text-xs">{style.price} ₽</p>
+                        <p className="text-blue-600 font-bold text-xs">от {style.price} ₽</p>
                       </div>
                     </div>
                   ))}
@@ -173,89 +184,61 @@ export default function HomePage() {
             </div>
             <button
               type="submit"
-              className="w-full py-3 bg-white text-purple-600 rounded-xl font-bold text-base shadow-xl hover:shadow-2xl transition-all"
+              className="w-full py-2.5 bg-blue-600 text-white rounded-xl font-semibold text-sm shadow-lg hover:bg-blue-700 transition-all"
             >
-              Найти стиль
+              Выбрать стиль
             </button>
           </form>
         </div>
-
-        <div className="absolute bottom-0 left-0 right-0">
-          <svg viewBox="0 0 1440 80" className="w-full h-auto">
-            <path
-              fill="#fdf2f8"
-              d="M0,40L80,45C160,50,320,60,480,56C640,52,800,36,960,32C1120,28,1280,36,1360,40L1440,44L1440,80L1360,80C1280,80,1120,80,960,80C800,80,640,80,480,80C320,80,160,80,80,80L0,80Z"
-            />
-          </svg>
-        </div>
       </div>
 
-      <div className="px-4 py-8 relative">
-        <button
-          onClick={() => navigate('/cart')}
-          className="fixed top-4 right-4 z-50 bg-white px-4 py-2.5 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95 flex items-center gap-2 border border-purple-100"
-        >
-          <ShoppingCart className="w-5 h-5 text-purple-600" />
-          {itemCount > 0 && (
-            <>
-              <span className="text-purple-600 font-bold text-sm">{itemCount}</span>
-              <span className="absolute -top-1 -right-1 bg-red-500 w-3 h-3 rounded-full animate-pulse"></span>
-            </>
-          )}
-        </button>
-
-        <div className="flex items-center gap-2.5 mb-6">
-          <div className="w-10 h-10 bg-gradient-to-br from-orange-400 to-pink-500 rounded-xl flex items-center justify-center">
+      {/* Популярные стили */}
+      <div className="px-4 py-6 bg-gradient-to-b from-pink-50 to-white">
+        <div className="flex items-center gap-2.5 mb-4">
+          <div className="w-9 h-9 bg-gradient-to-br from-orange-400 to-pink-500 rounded-xl flex items-center justify-center shadow-md">
             <TrendingUp className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-gray-800">Популярные стили</h2>
+            <h2 className="text-lg font-bold text-gray-800">Популярные стили</h2>
             <p className="text-gray-500 text-xs">Выбор пользователей</p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-3 mb-5">
+        <div className="grid grid-cols-2 gap-3 mb-4">
           {displayedStyles.map((style, index) => (
             <div
               key={style.id}
               onClick={() => navigate(`/style/${style.id}`)}
-              className="group relative bg-white rounded-2xl shadow-md overflow-hidden cursor-pointer transition-all hover:shadow-xl active:scale-[0.98] flex"
+              className="bg-white rounded-2xl shadow-sm overflow-hidden cursor-pointer transition-all hover:shadow-md active:scale-[0.98]"
             >
-              <div className="w-32 h-32 flex-shrink-0 overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
+              <div className="w-full aspect-[3/4] overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
                 <img
                   src={style.preview_image || PLACEHOLDER_IMAGES[index % PLACEHOLDER_IMAGES.length]}
                   alt={style.name}
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                  className="w-full h-full object-cover"
                 />
               </div>
 
-              <div className="flex-1 p-4 flex flex-col justify-between">
-                <div>
-                  <h3 className="font-bold text-base mb-1 text-gray-800 line-clamp-1">
-                    {style.name}
-                  </h3>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <span className="text-purple-600 font-bold text-xl">
-                    {style.price} ₽
-                  </span>
-                </div>
+              <div className="px-3 py-2">
+                <h3 className="font-bold text-sm text-gray-800 line-clamp-1 mb-0.5">
+                  {style.name}
+                </h3>
+                <p className="text-gray-500 text-xs">от {style.price} ₽</p>
               </div>
             </div>
           ))}
         </div>
 
         {totalPages > 1 && (
-          <div className="flex justify-center items-center gap-2 mb-5">
+          <div className="flex justify-center items-center gap-2 mb-4">
             {Array.from({ length: totalPages }).map((_, idx) => (
               <button
                 key={idx}
                 onClick={() => setCurrentPage(idx)}
                 className={`transition-all ${
                   idx === currentPage
-                    ? 'w-8 h-8 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-lg shadow-md'
-                    : 'w-8 h-8 bg-white text-gray-600 font-medium rounded-lg shadow-sm'
+                    ? 'w-7 h-7 bg-blue-600 text-white font-bold rounded-lg shadow-md'
+                    : 'w-7 h-7 bg-white text-gray-600 font-medium rounded-lg shadow-sm'
                 }`}
               >
                 {idx + 1}
@@ -266,7 +249,7 @@ export default function HomePage() {
 
         <button
           onClick={() => navigate('/catalog')}
-          className="w-full py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all"
+          className="w-full py-3.5 bg-blue-600 text-white rounded-xl font-bold text-base shadow-lg hover:shadow-xl hover:bg-blue-700 transition-all"
         >
           Все стили
         </button>
