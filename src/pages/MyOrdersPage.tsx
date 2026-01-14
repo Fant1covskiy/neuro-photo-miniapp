@@ -4,7 +4,6 @@ import { ChevronLeft, Package, Clock, CheckCircle, Download, AlertCircle } from 
 import { useTelegram } from '../hooks/useTelegram';
 import apiClient from '../api/client';
 
-
 interface Order {
   id: number;
   telegram_user_id: string;
@@ -14,17 +13,15 @@ interface Order {
   status: 'pending' | 'processing' | 'completed' | 'cancelled';
   photos: string[];
   result_photos: string[] | null;
-  styles: string | Array<{ id: number; name: string; price: number }>; // 🔥 ИЗМЕНЕНО: может быть строкой!
+  styles: string | Array<{ id: number; name: string; price: number }>;
   created_at: string;
 }
-
 
 export default function MyOrdersPage() {
   const navigate = useNavigate();
   const { user } = useTelegram();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
-
 
   useEffect(() => {
     if (user?.id) {
@@ -34,29 +31,18 @@ export default function MyOrdersPage() {
     }
   }, [user]);
 
-
   const loadOrders = async () => {
     try {
       setLoading(true);
-      
-      // 👀 ОТЛАДКА
-      alert(`Ищем заказы для User ID: ${user?.id}`);
-      
       const response = await apiClient.get(`/orders/user/${user?.id}`);
-      
-      // 👀 ОТЛАДКА
-      alert(`Найдено заказов: ${response.data.length}\n\nПервый заказ: ${response.data[0] ? JSON.stringify({id: response.data[0].id, telegram_user_id: response.data[0].telegram_user_id}) : 'нет'}`);
-      
       setOrders(response.data);
     } catch (error: any) {
       console.error('Error loading orders:', error);
-      alert(`❌ Ошибка загрузки: ${error.message}`);
     } finally {
       setLoading(false);
     }
   };
 
-  // 🔥 НОВАЯ ФУНКЦИЯ: парсинг styles
   const parseStyles = (styles: string | Array<{ id: number; name: string; price: number }>) => {
     if (typeof styles === 'string') {
       try {
@@ -68,7 +54,6 @@ export default function MyOrdersPage() {
     }
     return styles;
   };
-
 
   const getStatusInfo = (status: string) => {
     switch (status) {
@@ -105,7 +90,6 @@ export default function MyOrdersPage() {
     }
   };
 
-
   const downloadImage = async (filename: string, index: number) => {
     try {
       const response = await fetch(`${apiClient.defaults.baseURL}/uploads/results/${filename}`);
@@ -120,10 +104,8 @@ export default function MyOrdersPage() {
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Error downloading image:', error);
-      alert('Ошибка при скачивании фото');
     }
   };
-
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 pb-20">
@@ -138,7 +120,6 @@ export default function MyOrdersPage() {
           <h1 className="text-xl font-bold text-gray-800">Мои заказы</h1>
         </div>
       </div>
-
 
       <div className="px-4 py-6">
         {!user?.id ? (
@@ -159,7 +140,7 @@ export default function MyOrdersPage() {
             <p className="text-gray-600 mb-6">Создайте свой первый заказ</p>
             <button
               onClick={() => navigate('/catalog')}
-              className="px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition"
+              className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-semibold hover:shadow-lg transform hover:scale-105 transition-all"
             >
               Перейти в каталог
             </button>
@@ -168,10 +149,10 @@ export default function MyOrdersPage() {
           <div className="space-y-4">
             {orders.map((order) => {
               const statusInfo = getStatusInfo(order.status);
-              const styles = parseStyles(order.styles); // 🔥 ПАРСИМ СТИЛИ
+              const styles = parseStyles(order.styles);
               
               return (
-                <div key={order.id} className="bg-white rounded-2xl shadow-md p-5">
+                <div key={order.id} className="bg-white rounded-2xl shadow-md p-5 hover:shadow-lg transition-shadow">
                   <div className="flex items-start justify-between mb-4">
                     <div>
                       <p className="text-sm text-gray-500 mb-1">Заказ</p>
@@ -182,7 +163,6 @@ export default function MyOrdersPage() {
                       <span className="text-xs font-semibold">{statusInfo.text}</span>
                     </div>
                   </div>
-
 
                   <div className="space-y-2 mb-4">
                     <div className="flex justify-between text-sm">
@@ -203,11 +183,10 @@ export default function MyOrdersPage() {
                     </div>
                   </div>
 
-
                   {order.status === 'completed' && order.result_photos && order.result_photos.length > 0 && (
-                    <div className="border-t border-gray-200 pt-4">
-                      <p className="text-sm font-semibold text-gray-800 mb-3">Готовые фото:</p>
-                      <div className="grid grid-cols-3 gap-2">
+                    <div className="border-t border-gray-200 pt-4 mt-4">
+                      <p className="text-sm font-semibold text-gray-800 mb-3">✨ Готовые фото:</p>
+                      <div className="grid grid-cols-3 gap-3">
                         {order.result_photos.map((filename, index) => (
                           <div key={index} className="relative aspect-square rounded-xl overflow-hidden bg-gray-100 group">
                             <img 
@@ -217,9 +196,10 @@ export default function MyOrdersPage() {
                             />
                             <button
                               onClick={() => downloadImage(filename, index)}
-                              className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                              className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                             >
-                              <Download className="w-6 h-6 text-white" />
+                              <Download className="w-8 h-8 text-white mb-1" />
+                              <span className="text-xs text-white font-medium">Скачать</span>
                             </button>
                           </div>
                         ))}

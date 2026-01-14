@@ -61,8 +61,6 @@ export default function UploadPage() {
       setUploading(true);
 
 
-      // 👀 ОТЛАДКА
-      alert(`Создаём заказ для:\nID: ${user?.id}\nИмя: ${user?.first_name}\nUsername: ${user?.username}`);
 
 
       const formData = new FormData();
@@ -89,8 +87,6 @@ export default function UploadPage() {
       });
 
 
-      // 👀 ОТЛАДКА
-      alert(`Заказ создан!\nID заказа: ${response.data.id}\nTelegram ID: ${response.data.telegram_user_id}`);
 
 
       const createdOrderId = response.data.id;
@@ -101,7 +97,6 @@ export default function UploadPage() {
       }, 100);
     } catch (error: any) {
       console.error('Error creating order:', error);
-      alert(`❌ Ошибка: ${error.response?.data?.message || error.message}`);
     } finally {
       setUploading(false);
     }
