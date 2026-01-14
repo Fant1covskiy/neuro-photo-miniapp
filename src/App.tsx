@@ -6,6 +6,7 @@ import CartPage from './pages/CartPage';
 import OrderPage from './pages/OrderPage';
 import SuccessPage from './pages/SuccessPage';
 import UploadPage from './pages/UploadPage';
+import MyOrdersPage from './pages/MyOrdersPage';
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
           <Route path="/order" element={<OrderPage />} />
           <Route path="/success/:orderId" element={<SuccessPage />} />
           <Route path="/upload/:orderId" element={<UploadPage />} />
+          <Route path="/my-orders" element={<MyOrdersPage />} />
         </Routes>
       </div>
     </div>

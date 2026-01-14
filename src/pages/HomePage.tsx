@@ -4,6 +4,7 @@ import { TrendingUp, ShoppingCart } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useTelegram } from '../hooks/useTelegram';
 import apiClient from '../api/client';
+import { Package } from 'lucide-react';
 
 interface Style {
   id: number;
@@ -129,6 +130,13 @@ export default function HomePage() {
         {cart.length > 0 && (
           <span className="text-gray-700 font-semibold text-sm">{cart.length}</span>
         )}
+      </button>
+
+      <button
+        onClick={() => navigate('/my-orders')}
+        className="fixed top-3 right-20 z-50 bg-white px-3 py-2 rounded-full shadow-lg flex items-center gap-1.5 border border-gray-200"
+      >
+        <Package className="w-5 h-5 text-gray-700" />
       </button>
 
       {/* Героическая секция */}
