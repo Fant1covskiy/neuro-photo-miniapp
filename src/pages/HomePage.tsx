@@ -1,10 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { TrendingUp, ShoppingCart } from 'lucide-react';
+import { TrendingUp, ShoppingCart, Package } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useTelegram } from '../hooks/useTelegram';
 import apiClient from '../api/client';
-import { Package } from 'lucide-react';
 
 interface Style {
   id: number;
@@ -59,7 +58,7 @@ export default function HomePage() {
 
   const loadPopularStyles = async () => {
     try {
-      const response = await apiClient.get('/styles?limit=8');
+      const response = await apiClient.get('/styles');
       setStyles(response.data);
     } catch (error) {
       console.error('Error loading styles:', error);
@@ -80,10 +79,13 @@ export default function HomePage() {
 
     if (value.trim().length > 0) {
       const query = value.toLowerCase();
-      const filtered = allStyles.filter(style => 
-        style.name.toLowerCase().includes(query) ||
-        style.description.toLowerCase().includes(query)
-      ).slice(0, 5);
+      const filtered = allStyles
+        .filter(
+          (style) =>
+            style.name.toLowerCase().includes(query) ||
+            style.description.toLowerCase().includes(query)
+        )
+        .slice(0, 5);
       setSuggestions(filtered);
       setShowSuggestions(true);
     } else {
@@ -132,6 +134,7 @@ export default function HomePage() {
         )}
       </button>
 
+      {/* Кнопка Мои заказы */}
       <button
         onClick={() => navigate('/my-orders')}
         className="fixed top-3 right-20 z-50 bg-white px-3 py-2 rounded-full shadow-lg flex items-center gap-1.5 border border-gray-200"
@@ -141,9 +144,12 @@ export default function HomePage() {
 
       {/* Героическая секция */}
       <div className="relative h-[340px] overflow-hidden">
-        <div 
-          className="absolute inset-0 bg-cover bg-center" 
-          style={{backgroundImage: "url('https://images.unsplash.com/photo-1534088568595-a066f410bcda?w=1920&h=1080&fit=crop')"}}
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{
+            backgroundImage:
+              "url('https://images.unsplash.com/photo-1534088568595-a066f410bcda?w=1920&h=1080&fit=crop')"
+          }}
         />
 
         <div className="relative z-10 h-full flex flex-col justify-center items-center text-center px-6">
@@ -155,19 +161,29 @@ export default function HomePage() {
             Создай фото в любом стиле за секунды с помощью нейросети
           </p>
 
+          {/* Поиск + кнопка на одной линии */}
           <form onSubmit={handleSearch} className="w-full max-w-xs">
-            <div ref={searchRef} className="relative mb-2">
-              <input
-                type="text"
-                placeholder="Поиск по стилям..."
-                value={searchQuery}
-                onChange={(e) => handleSearchChange(e.target.value)}
-                onFocus={() => searchQuery && setShowSuggestions(true)}
-                className="w-full px-4 py-2.5 bg-white/95 backdrop-blur-sm rounded-xl border border-white/50 focus:border-white focus:outline-none shadow-lg text-gray-800 placeholder-gray-400 text-sm"
-              />
+            <div ref={searchRef} className="relative">
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  placeholder="Поиск по стилям..."
+                  value={searchQuery}
+                  onChange={(e) => handleSearchChange(e.target.value)}
+                  onFocus={() => searchQuery && setShowSuggestions(true)}
+                  className="flex-1 h-10 px-4 bg-white/95 backdrop-blur-sm rounded-full border border-white/50 focus:border-white focus:outline-none shadow-lg text-gray-800 placeholder-gray-400 text-sm"
+                />
+
+                <button
+                  type="submit"
+                  className="h-10 px-4 bg-blue-600 text-white rounded-full font-semibold text-sm shadow-lg hover:bg-blue-700 active:scale-[0.97] transition-all whitespace-nowrap"
+                >
+                  Выбрать стиль
+                </button>
+              </div>
 
               {showSuggestions && suggestions.length > 0 && (
-                <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-2xl overflow-hidden z-50">
+                <div className="absolute left-0 right-0 mt-2 bg-white rounded-xl shadow-2xl overflow-hidden z-50">
                   {suggestions.map((style, index) => (
                     <div
                       key={style.id}
@@ -176,26 +192,27 @@ export default function HomePage() {
                     >
                       <div className="w-12 h-12 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100">
                         <img
-                          src={style.preview_image || PLACEHOLDER_IMAGES[index % PLACEHOLDER_IMAGES.length]}
+                          src={
+                            style.preview_image ||
+                            PLACEHOLDER_IMAGES[index % PLACEHOLDER_IMAGES.length]
+                          }
                           alt={style.name}
                           className="w-full h-full object-cover"
                         />
                       </div>
                       <div className="flex-1">
-                        <h4 className="font-semibold text-gray-800 text-sm">{style.name}</h4>
-                        <p className="text-blue-600 font-bold text-xs">от {style.price} ₽</p>
+                        <h4 className="font-semibold text-gray-800 text-sm">
+                          {style.name}
+                        </h4>
+                        <p className="text-blue-600 font-bold text-xs">
+                          от {style.price} ₽
+                        </p>
                       </div>
                     </div>
                   ))}
                 </div>
               )}
             </div>
-            <button
-              type="submit"
-              className="w-full py-2.5 bg-blue-600 text-white rounded-xl font-semibold text-sm shadow-lg hover:bg-blue-700 transition-all"
-            >
-              Выбрать стиль
-            </button>
           </form>
         </div>
       </div>
@@ -221,7 +238,10 @@ export default function HomePage() {
             >
               <div className="w-full aspect-[3/4] overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
                 <img
-                  src={style.preview_image || PLACEHOLDER_IMAGES[index % PLACEHOLDER_IMAGES.length]}
+                  src={
+                    style.preview_image ||
+                    PLACEHOLDER_IMAGES[index % PLACEHOLDER_IMAGES.length]
+                  }
                   alt={style.name}
                   className="w-full h-full object-cover"
                 />
