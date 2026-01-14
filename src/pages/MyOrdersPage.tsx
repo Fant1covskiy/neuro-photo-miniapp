@@ -1,18 +1,18 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Package, Clock, CheckCircle, Download } from 'lucide-react';
+import { ChevronLeft, Package, Clock, CheckCircle, Download, AlertCircle } from 'lucide-react';
 import { useTelegram } from '../hooks/useTelegram';
 import apiClient from '../api/client';
 
 interface Order {
   id: number;
-  telegram_user_id: number;
+  telegram_user_id: string;
   username: string;
   first_name: string;
-  total_price: number;
+  total_price: string;
   status: 'pending' | 'processing' | 'completed' | 'cancelled';
   photos: string[];
-  result_photos: string[];
+  result_photos: string[] | null;
   styles: Array<{ id: number; name: string; price: number }>;
   created_at: string;
 }
@@ -26,16 +26,27 @@ export default function MyOrdersPage() {
   useEffect(() => {
     if (user?.id) {
       loadOrders();
+    } else {
+      setLoading(false);
     }
   }, [user]);
 
   const loadOrders = async () => {
     try {
       setLoading(true);
+      
+      // 👀 ОТЛАДКА
+      alert(`Ищем заказы для User ID: ${user?.id}`);
+      
       const response = await apiClient.get(`/orders/user/${user?.id}`);
+      
+      // 👀 ОТЛАДКА
+      alert(`Найдено заказов: ${response.data.length}\n\nПервый заказ: ${response.data[0] ? JSON.stringify({id: response.data[0].id, telegram_user_id: response.data[0].telegram_user_id}) : 'нет'}`);
+      
       setOrders(response.data);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading orders:', error);
+      alert(`❌ Ошибка загрузки: ${error.message}`);
     } finally {
       setLoading(false);
     }
@@ -63,7 +74,7 @@ export default function MyOrdersPage() {
         };
       case 'cancelled':
         return {
-          icon: <Clock className="w-5 h-5 text-red-600" />,
+          icon: <AlertCircle className="w-5 h-5 text-red-600" />,
           text: 'Отменён',
           color: 'bg-red-50 border-red-200 text-red-800'
         };
@@ -84,10 +95,13 @@ export default function MyOrdersPage() {
       const link = document.createElement('a');
       link.href = url;
       link.download = `result_${index + 1}.jpg`;
+      document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Error downloading image:', error);
+      alert('Ошибка при скачивании фото');
     }
   };
 
@@ -106,10 +120,16 @@ export default function MyOrdersPage() {
       </div>
 
       <div className="px-4 py-6">
-        {loading ? (
+        {!user?.id ? (
+          <div className="text-center py-16 bg-white rounded-2xl shadow-sm">
+            <AlertCircle className="w-16 h-16 text-red-300 mx-auto mb-4" />
+            <h3 className="text-xl font-bold text-gray-800 mb-2">Ошибка авторизации</h3>
+            <p className="text-gray-600">Откройте приложение через Telegram бота</p>
+          </div>
+        ) : loading ? (
           <div className="text-center py-12">
             <div className="animate-spin w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
-            <p className="text-gray-600">Загрузка...</p>
+            <p className="text-gray-600">Загрузка заказов...</p>
           </div>
         ) : orders.length === 0 ? (
           <div className="text-center py-16 bg-white rounded-2xl shadow-sm">
@@ -118,7 +138,7 @@ export default function MyOrdersPage() {
             <p className="text-gray-600 mb-6">Создайте свой первый заказ</p>
             <button
               onClick={() => navigate('/catalog')}
-              className="px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold"
+              className="px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition"
             >
               Перейти в каталог
             </button>

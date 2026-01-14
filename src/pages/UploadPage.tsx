@@ -2,13 +2,17 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft, Upload, X, Check } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import { useTelegram } from '../hooks/useTelegram';
+import apiClient from '../api/client';
 
 export default function UploadPage() {
   const navigate = useNavigate();
   const { orderId } = useParams<{ orderId: string }>();
   const { cart, totalPrice, clearCart } = useCart();
+  const { user } = useTelegram();
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     if (cart.length === 0) {
@@ -46,26 +50,49 @@ export default function UploadPage() {
       return;
     }
 
-    const finalOrderId = orderId || Math.floor(100000 + Math.random() * 900000);
+    try {
+      setUploading(true);
 
-    // TODO: Здесь должна быть отправка на сервер
-    // const formData = new FormData();
-    // selectedFiles.forEach((file, index) => {
-    //   formData.append(`photo${index}`, file);
-    // });
-    // formData.append('styles', JSON.stringify(cart));
-    // formData.append('total', totalPrice.toString());
-    
-    // await fetch('http://localhost:3000/orders', {
-    //   method: 'POST',
-    //   body: formData,
-    // });
+      // 👀 ОТЛАДКА
+      alert(`Создаём заказ для:\nID: ${user?.id}\nИмя: ${user?.first_name}\nUsername: ${user?.username}`);
 
-    navigate(`/success/${finalOrderId}`);
-    
-    setTimeout(() => {
-      clearCart();
-    }, 100);
+      const formData = new FormData();
+      
+      formData.append('telegram_user_id', user?.id?.toString() || '0');
+      formData.append('username', user?.username || '');
+      formData.append('first_name', user?.first_name || '');
+      formData.append('total_price', totalPrice.toString());
+      formData.append('styles', JSON.stringify(cart.map(s => ({ 
+        id: s.id, 
+        name: s.name, 
+        price: s.price 
+      }))));
+      
+      selectedFiles.forEach((file) => {
+        formData.append('photos', file);
+      });
+
+      const response = await apiClient.post('/orders', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      // 👀 ОТЛАДКА
+      alert(`Заказ создан!\nID заказа: ${response.data.id}\nTelegram ID: ${response.data.telegram_user_id}`);
+
+      const createdOrderId = response.data.id;
+      navigate(`/success/${createdOrderId}`);
+      
+      setTimeout(() => {
+        clearCart();
+      }, 100);
+    } catch (error: any) {
+      console.error('Error creating order:', error);
+      alert(`❌ Ошибка: ${error.response?.data?.message || error.message}`);
+    } finally {
+      setUploading(false);
+    }
   };
 
   if (cart.length === 0) {
@@ -87,7 +114,6 @@ export default function UploadPage() {
       </div>
 
       <div className="px-4 pt-6">
-        {/* Инструкция */}
         <div className="bg-white rounded-2xl shadow-md p-6 mb-6">
           <h3 className="font-bold text-gray-800 mb-3">Требования к фото</h3>
           <ul className="space-y-2 text-sm text-gray-600">
@@ -106,7 +132,6 @@ export default function UploadPage() {
           </ul>
         </div>
 
-        {/* Загрузка фото */}
         <div className="bg-white rounded-2xl shadow-md p-6 mb-6">
           <h3 className="font-bold text-gray-800 mb-4">Ваши фото ({selectedFiles.length}/3)</h3>
           
@@ -130,7 +155,7 @@ export default function UploadPage() {
             <label className="block">
               <input
                 type="file"
-                accept="image/jpeg,image/png"
+                accept="image/jpeg,image/png,image/jpg"
                 multiple
                 onChange={handleFileSelect}
                 className="hidden"
@@ -144,7 +169,6 @@ export default function UploadPage() {
           )}
         </div>
 
-        {/* Итоговая сумма */}
         <div className="bg-white rounded-2xl shadow-md p-6">
           <h3 className="font-bold text-gray-800 mb-3">Детали заказа</h3>
           <div className="space-y-2 mb-4">
@@ -153,12 +177,12 @@ export default function UploadPage() {
               <span className="font-semibold text-gray-800">{selectedFiles.length} шт</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Срок выполнения:</span>
-              <span className="font-semibold text-gray-800">24 часа</span>
+              <span className="text-gray-600">Стили:</span>
+              <span className="font-semibold text-gray-800">{cart.length} шт</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Формат:</span>
-              <span className="font-semibold text-gray-800">JPG, PNG</span>
+              <span className="text-gray-600">Срок выполнения:</span>
+              <span className="font-semibold text-gray-800">24 часа</span>
             </div>
           </div>
           
@@ -174,10 +198,10 @@ export default function UploadPage() {
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-2xl">
         <button
           onClick={handleSubmit}
-          disabled={selectedFiles.length === 0}
+          disabled={selectedFiles.length === 0 || uploading}
           className="w-full py-4 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white rounded-2xl font-bold text-lg shadow-lg hover:shadow-xl transition-all transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
         >
-          Оформить заказ
+          {uploading ? 'Отправка...' : 'Оформить заказ'}
         </button>
       </div>
     </div>
