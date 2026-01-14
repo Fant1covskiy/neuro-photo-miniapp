@@ -4,6 +4,7 @@ import { ChevronLeft, Package, Clock, CheckCircle, Download, AlertCircle } from 
 import { useTelegram } from '../hooks/useTelegram';
 import apiClient from '../api/client';
 
+
 interface Order {
   id: number;
   telegram_user_id: string;
@@ -13,15 +14,17 @@ interface Order {
   status: 'pending' | 'processing' | 'completed' | 'cancelled';
   photos: string[];
   result_photos: string[] | null;
-  styles: Array<{ id: number; name: string; price: number }>;
+  styles: string | Array<{ id: number; name: string; price: number }>; // 🔥 ИЗМЕНЕНО: может быть строкой!
   created_at: string;
 }
+
 
 export default function MyOrdersPage() {
   const navigate = useNavigate();
   const { user } = useTelegram();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+
 
   useEffect(() => {
     if (user?.id) {
@@ -30,6 +33,7 @@ export default function MyOrdersPage() {
       setLoading(false);
     }
   }, [user]);
+
 
   const loadOrders = async () => {
     try {
@@ -51,6 +55,20 @@ export default function MyOrdersPage() {
       setLoading(false);
     }
   };
+
+  // 🔥 НОВАЯ ФУНКЦИЯ: парсинг styles
+  const parseStyles = (styles: string | Array<{ id: number; name: string; price: number }>) => {
+    if (typeof styles === 'string') {
+      try {
+        return JSON.parse(styles);
+      } catch (e) {
+        console.error('Error parsing styles:', e);
+        return [];
+      }
+    }
+    return styles;
+  };
+
 
   const getStatusInfo = (status: string) => {
     switch (status) {
@@ -87,6 +105,7 @@ export default function MyOrdersPage() {
     }
   };
 
+
   const downloadImage = async (filename: string, index: number) => {
     try {
       const response = await fetch(`${apiClient.defaults.baseURL}/uploads/results/${filename}`);
@@ -105,6 +124,7 @@ export default function MyOrdersPage() {
     }
   };
 
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 pb-20">
       <div className="sticky top-0 z-50 bg-white shadow-sm">
@@ -118,6 +138,7 @@ export default function MyOrdersPage() {
           <h1 className="text-xl font-bold text-gray-800">Мои заказы</h1>
         </div>
       </div>
+
 
       <div className="px-4 py-6">
         {!user?.id ? (
@@ -147,6 +168,8 @@ export default function MyOrdersPage() {
           <div className="space-y-4">
             {orders.map((order) => {
               const statusInfo = getStatusInfo(order.status);
+              const styles = parseStyles(order.styles); // 🔥 ПАРСИМ СТИЛИ
+              
               return (
                 <div key={order.id} className="bg-white rounded-2xl shadow-md p-5">
                   <div className="flex items-start justify-between mb-4">
@@ -160,11 +183,12 @@ export default function MyOrdersPage() {
                     </div>
                   </div>
 
+
                   <div className="space-y-2 mb-4">
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Стили:</span>
                       <span className="font-semibold text-gray-800">
-                        {order.styles.map(s => s.name).join(', ')}
+                        {styles.map((s: any) => s.name).join(', ')}
                       </span>
                     </div>
                     <div className="flex justify-between text-sm">
@@ -178,6 +202,7 @@ export default function MyOrdersPage() {
                       </span>
                     </div>
                   </div>
+
 
                   {order.status === 'completed' && order.result_photos && order.result_photos.length > 0 && (
                     <div className="border-t border-gray-200 pt-4">
