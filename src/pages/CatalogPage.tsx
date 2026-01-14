@@ -71,57 +71,64 @@ export default function CatalogPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 pb-20">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-6 rounded-b-3xl shadow-lg sticky top-0 z-10">
-        <div className="flex items-center gap-3 mb-4">
-          <button onClick={() => navigate('/')} className="p-2 hover:bg-white/20 rounded-lg">
-            <ArrowLeft className="w-6 h-6" />
-          </button>
-          <h1 className="text-2xl font-bold">Каталог стилей</h1>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
+      {/* Header - фиксированный */}
+      <div className="bg-white border-b border-gray-200 sticky top-0 z-20 shadow-sm">
+        <div className="px-4 py-4">
+          <div className="flex items-center gap-3 mb-3">
+            <button 
+              onClick={() => navigate('/')} 
+              className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <ArrowLeft className="w-6 h-6 text-gray-700" />
+            </button>
+            <h1 className="text-xl font-bold text-gray-800">Каталог стилей</h1>
+          </div>
 
-        {/* Category Filter */}
-        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-          <button
-            onClick={() => setSelectedCategory(null)}
-            className={`px-4 py-2 rounded-lg whitespace-nowrap transition-all ${
-              selectedCategory === null
-                ? 'bg-white text-purple-600 font-bold'
-                : 'bg-white/20 text-white'
-            }`}
-          >
-            Все
-          </button>
-          {categories.map((category) => (
+          {/* Category Filter - горизонтальный скролл */}
+          <div className="flex gap-2 overflow-x-auto pb-1 hide-scrollbar">
             <button
-              key={category.id}
-              onClick={() => setSelectedCategory(category.id)}
-              className={`px-4 py-2 rounded-lg whitespace-nowrap transition-all ${
-                selectedCategory === category.id
-                  ? 'bg-white text-purple-600 font-bold'
-                  : 'bg-white/20 text-white'
+              onClick={() => setSelectedCategory(null)}
+              className={`px-4 py-2 rounded-full whitespace-nowrap text-sm font-semibold transition-all flex-shrink-0 ${
+                selectedCategory === null
+                  ? 'bg-blue-600 text-white shadow-md'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
-              {category.name}
+              Все
             </button>
-          ))}
+            {categories.map((category) => (
+              <button
+                key={category.id}
+                onClick={() => setSelectedCategory(category.id)}
+                className={`px-4 py-2 rounded-full whitespace-nowrap text-sm font-semibold transition-all flex-shrink-0 ${
+                  selectedCategory === category.id
+                    ? 'bg-blue-600 text-white shadow-md'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                {category.name}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
       {/* Styles Grid */}
-      <div className="px-6 mt-6">
-        <p className="text-gray-600 mb-4">Найдено стилей: {styles.length}</p>
+      <div className="px-4 py-5 pb-20">
+        <p className="text-gray-600 text-sm mb-4 font-medium">
+          Найдено стилей: {styles.length}
+        </p>
 
         {styles.length > 0 ? (
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3">
             {styles.map((style) => (
               <div
                 key={style.id}
                 onClick={() => navigate(`/style/${style.id}`)}
-                className="bg-white rounded-2xl shadow-md overflow-hidden active:scale-95 transition-transform cursor-pointer"
+                className="bg-white rounded-2xl shadow-sm overflow-hidden active:scale-95 transition-all cursor-pointer hover:shadow-md"
               >
-                <div className="relative h-40 bg-gradient-to-br from-gray-100 to-gray-200">
+                <div className="relative w-full aspect-square bg-gradient-to-br from-gray-100 to-gray-200">
                   {style.preview_image ? (
                     <img
                       src={style.preview_image}
@@ -138,17 +145,15 @@ export default function CatalogPage() {
                   <h3 className="font-bold text-gray-800 text-sm mb-1 line-clamp-1">
                     {style.name}
                   </h3>
-                  {style.category && (
-                    <p className="text-xs text-purple-600 mb-2">{style.category.name}</p>
-                  )}
-                  <p className="text-purple-600 font-bold text-lg">{style.price} ₽</p>
+                  <p className="text-gray-500 text-xs font-medium">от {style.price} ₽</p>
                 </div>
               </div>
             ))}
           </div>
         ) : (
-          <div className="text-center py-12 text-gray-500 bg-white rounded-2xl">
-            Стили не найдены
+          <div className="text-center py-16 text-gray-400 bg-white rounded-2xl shadow-sm">
+            <Sparkles className="w-16 h-16 mx-auto mb-3 text-gray-300" />
+            <p className="text-sm font-medium">Стили не найдены</p>
           </div>
         )}
       </div>

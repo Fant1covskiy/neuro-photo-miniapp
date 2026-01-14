@@ -17,8 +17,8 @@ function App() {
           <Route path="/style/:id" element={<StylePage />} />
           <Route path="/cart" element={<CartPage />} />
           <Route path="/order" element={<OrderPage />} />
-          <Route path="/success" element={<SuccessPage />} />
-          <Route path="/upload" element={<UploadPage />} />
+          <Route path="/success/:orderId" element={<SuccessPage />} />
+          <Route path="/upload/:orderId" element={<UploadPage />} />
         </Routes>
       </div>
     </div>

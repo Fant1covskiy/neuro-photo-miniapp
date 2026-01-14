@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft, Upload, X, Check } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 
 export default function UploadPage() {
   const navigate = useNavigate();
+  const { orderId } = useParams<{ orderId: string }>();
   const { cart, totalPrice, clearCart } = useCart();
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
@@ -45,8 +46,7 @@ export default function UploadPage() {
       return;
     }
 
-    // Генерируем номер заказа
-    const orderId = Math.floor(100000 + Math.random() * 900000);
+    const finalOrderId = orderId || Math.floor(100000 + Math.random() * 900000);
 
     // TODO: Здесь должна быть отправка на сервер
     // const formData = new FormData();
@@ -61,10 +61,8 @@ export default function UploadPage() {
     //   body: formData,
     // });
 
-    // СНАЧАЛА переходим на страницу успеха
-    navigate(`/success/${orderId}`);
+    navigate(`/success/${finalOrderId}`);
     
-    // ПОТОМ очищаем корзину (с небольшой задержкой)
     setTimeout(() => {
       clearCart();
     }, 100);

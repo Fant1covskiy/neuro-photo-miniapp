@@ -19,7 +19,8 @@ export default function OrderPage() {
   }
 
   const handleContinue = () => {
-    navigate('/upload');
+    const tempOrderId = Math.floor(100000 + Math.random() * 900000);
+    navigate(`/upload/${tempOrderId}`);
   };
 
   return (
