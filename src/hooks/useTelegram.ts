@@ -59,8 +59,16 @@ declare global {
 }
 
 export function useTelegram() {
+  // Тестовый пользователь (совпадает с заказом в базе)
+  const mockUser = {
+    id: 12345678,
+    first_name: 'Тестовый Пользователь',
+    username: 'testuser',
+    language_code: 'ru',
+  };
+
   const [tg, setTg] = useState<TelegramWebApp | null>(null);
-  const [user, setUser] = useState<TelegramUser | null>(null);
+  const [user, setUser] = useState<TelegramUser>(mockUser); // По умолчанию mock
 
   useEffect(() => {
     const telegram = window.Telegram?.WebApp;
@@ -69,13 +77,22 @@ export function useTelegram() {
       telegram.ready();
       telegram.expand();
       setTg(telegram);
-      setUser(telegram.initDataUnsafe.user || null);
+      
+      // Если есть реальный пользователь - используем его
+      if (telegram.initDataUnsafe.user) {
+        setUser(telegram.initDataUnsafe.user);
+        console.log('✅ Real Telegram user:', telegram.initDataUnsafe.user);
+      } else {
+        console.log('⚠️ Using mock user:', mockUser);
+      }
+    } else {
+      console.log('⚠️ Telegram WebApp not found, using mock user');
     }
   }, []);
 
   return {
     tg,
     user,
-    isReady: !!tg,
+    isReady: true, // Всегда готов (либо реальный либо mock)
   };
 }
