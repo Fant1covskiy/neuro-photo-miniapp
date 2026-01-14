@@ -11,8 +11,8 @@ interface Order {
   first_name: string;
   total_price: string;
   status: 'pending' | 'processing' | 'completed' | 'cancelled';
-  photos: string[];
-  result_photos: string[] | null;
+  photos: string | string[]; // 🔥 МОЖЕТ БЫТЬ СТРОКОЙ
+  result_photos: string | string[] | null; // 🔥 МОЖЕТ БЫТЬ СТРОКОЙ
   styles: string | Array<{ id: number; name: string; price: number }>;
   created_at: string;
 }
@@ -43,6 +43,7 @@ export default function MyOrdersPage() {
     }
   };
 
+  // 🔥 ПАРСИНГ STYLES
   const parseStyles = (styles: string | Array<{ id: number; name: string; price: number }>) => {
     if (typeof styles === 'string') {
       try {
@@ -53,6 +54,20 @@ export default function MyOrdersPage() {
       }
     }
     return styles;
+  };
+
+  // 🔥 НОВАЯ ФУНКЦИЯ: парсинг photos/result_photos
+  const parsePhotos = (photos: string | string[] | null) => {
+    if (!photos) return [];
+    if (typeof photos === 'string') {
+      try {
+        return JSON.parse(photos);
+      } catch (e) {
+        console.error('Error parsing photos:', e);
+        return [];
+      }
+    }
+    return photos;
   };
 
   const getStatusInfo = (status: string) => {
@@ -92,18 +107,25 @@ export default function MyOrdersPage() {
 
   const downloadImage = async (filename: string, index: number) => {
     try {
-      const response = await fetch(`${apiClient.defaults.baseURL}/uploads/results/${filename}`);
+      const imageUrl = `${apiClient.defaults.baseURL}/uploads/results/${filename}`;
+      
+      const response = await fetch(imageUrl);
+      if (!response.ok) {
+        throw new Error('Failed to download image');
+      }
+      
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `result_${index + 1}.jpg`;
+      link.download = `neuro_photo_result_${index + 1}.jpg`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Error downloading image:', error);
+      alert('Ошибка при скачивании фото. Попробуйте позже.');
     }
   };
 
@@ -150,6 +172,7 @@ export default function MyOrdersPage() {
             {orders.map((order) => {
               const statusInfo = getStatusInfo(order.status);
               const styles = parseStyles(order.styles);
+              const resultPhotos = parsePhotos(order.result_photos); // 🔥 ПАРСИМ
               
               return (
                 <div key={order.id} className="bg-white rounded-2xl shadow-md p-5 hover:shadow-lg transition-shadow">
@@ -167,7 +190,7 @@ export default function MyOrdersPage() {
                   <div className="space-y-2 mb-4">
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Стили:</span>
-                      <span className="font-semibold text-gray-800">
+                      <span className="font-semibold text-gray-800 text-right">
                         {styles.map((s: any) => s.name).join(', ')}
                       </span>
                     </div>
@@ -183,26 +206,40 @@ export default function MyOrdersPage() {
                     </div>
                   </div>
 
-                  {order.status === 'completed' && order.result_photos && order.result_photos.length > 0 && (
+                  {order.status === 'completed' && resultPhotos.length > 0 && (
                     <div className="border-t border-gray-200 pt-4 mt-4">
-                      <p className="text-sm font-semibold text-gray-800 mb-3">✨ Готовые фото:</p>
+                      <div className="flex items-center gap-2 mb-3">
+                        <CheckCircle className="w-5 h-5 text-green-600" />
+                        <p className="text-sm font-semibold text-gray-800">
+                          Готовые фото ({resultPhotos.length}):
+                        </p>
+                      </div>
                       <div className="grid grid-cols-3 gap-3">
-                        {order.result_photos.map((filename, index) => (
-                          <div key={index} className="relative aspect-square rounded-xl overflow-hidden bg-gray-100 group">
-                            <img 
-                              src={`${apiClient.defaults.baseURL}/uploads/results/${filename}`} 
-                              alt={`Result ${index + 1}`} 
-                              className="w-full h-full object-cover" 
-                            />
-                            <button
-                              onClick={() => downloadImage(filename, index)}
-                              className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                            >
-                              <Download className="w-8 h-8 text-white mb-1" />
-                              <span className="text-xs text-white font-medium">Скачать</span>
-                            </button>
-                          </div>
-                        ))}
+                        {resultPhotos.map((filename: string, index: number) => {
+                          const imageUrl = `${apiClient.defaults.baseURL}/uploads/results/${filename}`;
+                          
+                          return (
+                            <div key={index} className="relative aspect-square rounded-xl overflow-hidden bg-gray-100 group border-2 border-green-200">
+                              <img 
+                                src={imageUrl}
+                                alt={`Result ${index + 1}`} 
+                                className="w-full h-full object-cover" 
+                                onError={(e) => {
+                                  console.error('Image failed to load:', imageUrl);
+                                  const target = e.target as HTMLImageElement;
+                                  target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Crect fill="%23f0f0f0" width="100" height="100"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" fill="%23999"%3EНет фото%3C/text%3E%3C/svg%3E';
+                                }}
+                              />
+                              <button
+                                onClick={() => downloadImage(filename, index)}
+                                className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                <Download className="w-8 h-8 text-white mb-1" />
+                                <span className="text-xs text-white font-semibold">Скачать</span>
+                              </button>
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
