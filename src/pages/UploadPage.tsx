@@ -1,24 +1,27 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Upload, X, Check } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useTelegram } from '../hooks/useTelegram';
 import apiClient from '../api/client';
 
+
 export default function UploadPage() {
   const navigate = useNavigate();
-  const { orderId } = useParams<{ orderId: string }>();
+  // ❌ УДАЛЕНА СТРОКА: const { orderId } = useParams<{ orderId: string }>();
   const { cart, totalPrice, clearCart } = useCart();
   const { user } = useTelegram();
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
 
+
   useEffect(() => {
     if (cart.length === 0) {
       navigate('/catalog');
     }
   }, [cart.length, navigate]);
+
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -27,6 +30,7 @@ export default function UploadPage() {
       alert('Максимум 3 фото');
       return;
     }
+
 
     setSelectedFiles([...selectedFiles, ...files]);
     
@@ -39,10 +43,12 @@ export default function UploadPage() {
     });
   };
 
+
   const removeFile = (index: number) => {
     setSelectedFiles(selectedFiles.filter((_, i) => i !== index));
     setPreviews(previews.filter((_, i) => i !== index));
   };
+
 
   const handleSubmit = async () => {
     if (selectedFiles.length === 0) {
@@ -50,11 +56,14 @@ export default function UploadPage() {
       return;
     }
 
+
     try {
       setUploading(true);
 
+
       // 👀 ОТЛАДКА
       alert(`Создаём заказ для:\nID: ${user?.id}\nИмя: ${user?.first_name}\nUsername: ${user?.username}`);
+
 
       const formData = new FormData();
       
@@ -72,14 +81,17 @@ export default function UploadPage() {
         formData.append('photos', file);
       });
 
+
       const response = await apiClient.post('/orders', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
 
+
       // 👀 ОТЛАДКА
       alert(`Заказ создан!\nID заказа: ${response.data.id}\nTelegram ID: ${response.data.telegram_user_id}`);
+
 
       const createdOrderId = response.data.id;
       navigate(`/success/${createdOrderId}`);
@@ -95,9 +107,11 @@ export default function UploadPage() {
     }
   };
 
+
   if (cart.length === 0) {
     return null;
   }
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 pb-32">
@@ -112,6 +126,7 @@ export default function UploadPage() {
           <h1 className="text-xl font-bold text-gray-800">Загрузка фото</h1>
         </div>
       </div>
+
 
       <div className="px-4 pt-6">
         <div className="bg-white rounded-2xl shadow-md p-6 mb-6">
@@ -132,6 +147,7 @@ export default function UploadPage() {
           </ul>
         </div>
 
+
         <div className="bg-white rounded-2xl shadow-md p-6 mb-6">
           <h3 className="font-bold text-gray-800 mb-4">Ваши фото ({selectedFiles.length}/3)</h3>
           
@@ -151,6 +167,7 @@ export default function UploadPage() {
             </div>
           )}
 
+
           {selectedFiles.length < 3 && (
             <label className="block">
               <input
@@ -168,6 +185,7 @@ export default function UploadPage() {
             </label>
           )}
         </div>
+
 
         <div className="bg-white rounded-2xl shadow-md p-6">
           <h3 className="font-bold text-gray-800 mb-3">Детали заказа</h3>
@@ -194,6 +212,7 @@ export default function UploadPage() {
           </div>
         </div>
       </div>
+
 
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-2xl">
         <button
