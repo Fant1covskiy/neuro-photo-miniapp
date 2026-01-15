@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft, ShoppingCart, Check } from 'lucide-react';
 import { useCart } from '../context/CartContext';
@@ -20,8 +20,74 @@ const PLACEHOLDER_IMAGES = [
   'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&h=1000&fit=crop',
   'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=800&h=1000&fit=crop',
   'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=800&h=1000&fit=crop',
-  'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=800&h=1000&fit=crop'
+  'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=800&h=1000&fit=crop',
 ];
+
+function SwipeImage({
+  images,
+  currentIndex,
+  setCurrentIndex,
+  title,
+}: {
+  images: string[];
+  currentIndex: number;
+  setCurrentIndex: (i: number) => void;
+  title: string;
+}) {
+  const startXRef = useRef<number | null>(null);
+  const minSwipeDistance = 40;
+
+  const handleStart = (clientX: number) => {
+    startXRef.current = clientX;
+  };
+
+  const handleEnd = (clientX: number) => {
+    if (startXRef.current === null) return;
+    const diff = clientX - startXRef.current;
+    startXRef.current = null;
+    if (Math.abs(diff) < minSwipeDistance) return;
+    if (diff < 0 && currentIndex < images.length - 1) {
+      setCurrentIndex(currentIndex + 1);
+    } else if (diff > 0 && currentIndex > 0) {
+      setCurrentIndex(currentIndex - 1);
+    }
+  };
+
+  return (
+    <>
+      <div
+        className="w-full bg-black flex items-center justify-center select-none"
+        onMouseDown={(e) => handleStart(e.clientX)}
+        onMouseUp={(e) => handleEnd(e.clientX)}
+        onMouseLeave={() => {
+          startXRef.current = null;
+        }}
+        onTouchStart={(e) => handleStart(e.touches[0].clientX)}
+        onTouchEnd={(e) => handleEnd(e.changedTouches[0].clientX)}
+      >
+        <img
+          src={images[currentIndex]}
+          alt={title}
+          className="w-full h-auto max-h-[360px] object-contain"
+        />
+      </div>
+
+      {images.length > 1 && (
+        <div className="flex justify-center gap-1 py-3 bg-white">
+          {images.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => setCurrentIndex(index)}
+              className={`w-2 h-2 rounded-full transition-all ${
+                index === currentIndex ? 'bg-purple-600 w-4' : 'bg-gray-300'
+              }`}
+            />
+          ))}
+        </div>
+      )}
+    </>
+  );
+}
 
 export default function StylePage() {
   const { id } = useParams();
@@ -93,27 +159,12 @@ export default function StylePage() {
             )}
           </div>
 
-          <div className="w-full bg-black flex items-center justify-center">
-            <img
-              src={images[currentImageIndex]}
-              alt={style.name}
-              className="w-full h-auto max-h-[360px] object-contain"
-            />
-          </div>
-
-          {images.length > 1 && (
-            <div className="flex justify-center gap-1 py-3 bg-white">
-              {images.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => setCurrentImageIndex(index)}
-                  className={`w-2 h-2 rounded-full transition-all ${
-                    index === currentImageIndex ? 'bg-purple-600 w-4' : 'bg-gray-300'
-                  }`}
-                />
-              ))}
-            </div>
-          )}
+          <SwipeImage
+            images={images}
+            currentIndex={currentImageIndex}
+            setCurrentIndex={setCurrentImageIndex}
+            title={style.name}
+          />
 
           <div className="px-4 pb-4 pt-1 flex items-center justify-center">
             <span className="text-purple-600 font-bold text-2xl">
@@ -124,11 +175,15 @@ export default function StylePage() {
 
         <div className="bg-white rounded-2xl shadow-md p-6 mb-6">
           <h3 className="font-bold text-gray-800 mb-2 text-center">Описание</h3>
-          <p className="text-gray-600 leading-relaxed text-center">{style.description}</p>
+          <p className="text-gray-600 leading-relaxed text-center">
+            {style.description}
+          </p>
         </div>
 
         <div className="bg-white rounded-2xl shadow-md p-6 mb-6">
-          <h3 className="font-bold text-gray-800 mb-3 text-center">Детали заказа</h3>
+          <h3 className="font-bold text-gray-800 mb-3 text-center">
+            Детали заказа
+          </h3>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-gray-600">Срок выполнения:</span>
