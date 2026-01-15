@@ -35,17 +35,28 @@ function SwipeImage({
   title: string;
 }) {
   const startXRef = useRef<number | null>(null);
+  const isDownRef = useRef(false);
   const minSwipeDistance = 40;
 
-  const handleStart = (clientX: number) => {
+  const handlePointerDown = (clientX: number) => {
     startXRef.current = clientX;
+    isDownRef.current = true;
   };
 
-  const handleEnd = (clientX: number) => {
-    if (startXRef.current === null) return;
+  const handlePointerMove = (clientX: number) => {
+    if (!isDownRef.current || startXRef.current === null) return;
+  };
+
+  const handlePointerUp = (clientX: number) => {
+    if (!isDownRef.current || startXRef.current === null) return;
+
     const diff = clientX - startXRef.current;
+
+    isDownRef.current = false;
     startXRef.current = null;
+
     if (Math.abs(diff) < minSwipeDistance) return;
+
     if (diff < 0 && currentIndex < images.length - 1) {
       setCurrentIndex(currentIndex + 1);
     } else if (diff > 0 && currentIndex > 0) {
@@ -57,13 +68,16 @@ function SwipeImage({
     <>
       <div
         className="w-full bg-black flex items-center justify-center select-none"
-        onMouseDown={(e) => handleStart(e.clientX)}
-        onMouseUp={(e) => handleEnd(e.clientX)}
-        onMouseLeave={() => {
-          startXRef.current = null;
+        onMouseDown={(e) => handlePointerDown(e.clientX)}
+        onMouseMove={(e) => handlePointerMove(e.clientX)}
+        onMouseUp={(e) => handlePointerUp(e.clientX)}
+        onMouseLeave={(e) => {
+          if (!isDownRef.current) return;
+          handlePointerUp(e.clientX);
         }}
-        onTouchStart={(e) => handleStart(e.touches[0].clientX)}
-        onTouchEnd={(e) => handleEnd(e.changedTouches[0].clientX)}
+        onTouchStart={(e) => handlePointerDown(e.touches[0].clientX)}
+        onTouchMove={(e) => handlePointerMove(e.touches[0].clientX)}
+        onTouchEnd={(e) => handlePointerUp(e.changedTouches[0].clientX)}
       >
         <img
           src={images[currentIndex]}
