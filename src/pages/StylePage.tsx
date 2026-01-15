@@ -49,7 +49,7 @@ export default function StylePage() {
     }
   };
 
-  const isInCart = style ? cart.some(item => item.id === style.id) : false;
+  const isInCart = style ? cart.some((item) => item.id === style.id) : false;
 
   if (!style) {
     return (
@@ -79,55 +79,54 @@ export default function StylePage() {
       </div>
 
       <div className="px-4 py-6">
-        {/* Горизонтальная карточка */}
-        <div className="bg-white rounded-2xl shadow-md overflow-hidden flex mb-6">
-          <div className="relative w-32 h-32 flex-shrink-0 overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
-            <img
-              src={images[currentImageIndex]}
-              alt={style.name}
-              className="w-full h-full object-cover"
-            />
-            {images.length > 1 && (
-              <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1">
-                {images.map((_, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setCurrentImageIndex(index)}
-                    className={`w-1.5 h-1.5 rounded-full transition-all ${
-                      index === currentImageIndex
-                        ? 'bg-white w-4'
-                        : 'bg-white/50'
-                    }`}
-                  />
-                ))}
+        <div className="bg-white rounded-2xl shadow-md overflow-hidden mb-6">
+          <div className="px-4 pt-4">
+            <h2 className="text-xl font-bold text-gray-800 text-center mb-2">
+              {style.name}
+            </h2>
+            {style.category && (
+              <div className="flex justify-center mb-3">
+                <span className="inline-block px-3 py-1 bg-purple-100 text-purple-600 rounded-full text-xs font-semibold">
+                  {style.category.name}
+                </span>
               </div>
             )}
           </div>
 
-          <div className="flex-1 p-4 flex flex-col justify-between">
-            <div>
-              <h2 className="text-xl font-bold text-gray-800 mb-1">{style.name}</h2>
-              {style.category && (
-                <span className="inline-block px-2 py-0.5 bg-purple-100 text-purple-600 rounded-full text-xs font-semibold">
-                  {style.category.name}
-                </span>
-              )}
+          <div className="w-full bg-black flex items-center justify-center">
+            <img
+              src={images[currentImageIndex]}
+              alt={style.name}
+              className="w-full h-auto max-h-[360px] object-contain"
+            />
+          </div>
+
+          {images.length > 1 && (
+            <div className="flex justify-center gap-1 py-3 bg-white">
+              {images.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => setCurrentImageIndex(index)}
+                  className={`w-2 h-2 rounded-full transition-all ${
+                    index === currentImageIndex ? 'bg-purple-600 w-4' : 'bg-gray-300'
+                  }`}
+                />
+              ))}
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-purple-600 font-bold text-2xl">
-                {style.price} ₽
-              </span>
-            </div>
+          )}
+
+          <div className="px-4 pb-4 pt-1 flex items-center justify-center">
+            <span className="text-purple-600 font-bold text-2xl">
+              {style.price} ₽
+            </span>
           </div>
         </div>
 
-        {/* Описание */}
         <div className="bg-white rounded-2xl shadow-md p-6 mb-6">
           <h3 className="font-bold text-gray-800 mb-2 text-center">Описание</h3>
           <p className="text-gray-600 leading-relaxed text-center">{style.description}</p>
         </div>
 
-        {/* Детали заказа */}
         <div className="bg-white rounded-2xl shadow-md p-6 mb-6">
           <h3 className="font-bold text-gray-800 mb-3 text-center">Детали заказа</h3>
           <div className="space-y-2 text-sm">
