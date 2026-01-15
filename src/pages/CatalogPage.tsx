@@ -12,7 +12,7 @@ interface Category {
 interface Style {
   id: number;
   name: string;
-  preview_image: string;
+  preview_image: string[] | null;
   price: number;
   category?: Category;
 }
@@ -41,7 +41,7 @@ export default function CatalogPage() {
     if (tg) {
       tg.BackButton.show();
       tg.BackButton.onClick(() => navigate('/'));
-      
+
       return () => {
         tg.BackButton.hide();
       };
@@ -59,10 +59,8 @@ export default function CatalogPage() {
 
   const loadStyles = async (categoryId?: number) => {
     try {
-      const url = categoryId 
-        ? `/styles?category_id=${categoryId}`
-        : '/styles';
-      const response = await apiClient.get(url);
+      const url = categoryId ? `/styles?category_id=${categoryId}` : '/styles';
+      const response = await apiClient.get<Style[]>(url);
       setStyles(response.data);
     } catch (error) {
       console.error('Error loading styles:', error);
@@ -72,12 +70,11 @@ export default function CatalogPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
-      {/* Header - фиксированный */}
       <div className="bg-white border-b border-gray-200 sticky top-0 z-20 shadow-sm">
         <div className="px-4 py-4">
           <div className="flex items-center gap-3 mb-3">
-            <button 
-              onClick={() => navigate('/')} 
+            <button
+              onClick={() => navigate('/')}
               className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
             >
               <ArrowLeft className="w-6 h-6 text-gray-700" />
@@ -85,7 +82,6 @@ export default function CatalogPage() {
             <h1 className="text-xl font-bold text-gray-800">Каталог стилей</h1>
           </div>
 
-          {/* Category Filter - горизонтальный скролл */}
           <div className="flex gap-2 overflow-x-auto pb-1 hide-scrollbar">
             <button
               onClick={() => setSelectedCategory(null)}
@@ -114,7 +110,6 @@ export default function CatalogPage() {
         </div>
       </div>
 
-      {/* Styles Grid */}
       <div className="px-4 py-5 pb-20">
         <p className="text-gray-600 text-sm mb-4 font-medium">
           Найдено стилей: {styles.length}
@@ -122,33 +117,43 @@ export default function CatalogPage() {
 
         {styles.length > 0 ? (
           <div className="grid grid-cols-2 gap-3">
-            {styles.map((style) => (
-              <div
-                key={style.id}
-                onClick={() => navigate(`/style/${style.id}`)}
-                className="bg-white rounded-2xl shadow-sm overflow-hidden active:scale-95 transition-all cursor-pointer hover:shadow-md"
-              >
-                <div className="relative w-full aspect-square bg-gradient-to-br from-gray-100 to-gray-200">
-                  {style.preview_image ? (
-                    <img
-                      src={style.preview_image}
-                      alt={style.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <Sparkles className="w-12 h-12 text-gray-300" />
-                    </div>
-                  )}
+            {styles.map((style) => {
+              const mainImage =
+                Array.isArray(style.preview_image) &&
+                style.preview_image.length > 0
+                  ? style.preview_image[0]
+                  : '';
+
+              return (
+                <div
+                  key={style.id}
+                  onClick={() => navigate(`/style/${style.id}`)}
+                  className="bg-white rounded-2xl shadow-sm overflow-hidden active:scale-95 transition-all cursor-pointer hover:shadow-md"
+                >
+                  <div className="relative w-full aspect-square bg-gradient-to-br from-gray-100 to-gray-200">
+                    {mainImage ? (
+                      <img
+                        src={mainImage}
+                        alt={style.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Sparkles className="w-12 h-12 text-gray-300" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-3">
+                    <h3 className="font-bold text-gray-800 text-sm mb-1 line-clamp-1">
+                      {style.name}
+                    </h3>
+                    <p className="text-gray-500 text-xs font-medium">
+                      от {style.price} ₽
+                    </p>
+                  </div>
                 </div>
-                <div className="p-3">
-                  <h3 className="font-bold text-gray-800 text-sm mb-1 line-clamp-1">
-                    {style.name}
-                  </h3>
-                  <p className="text-gray-500 text-xs font-medium">от {style.price} ₽</p>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <div className="text-center py-16 text-gray-400 bg-white rounded-2xl shadow-sm">

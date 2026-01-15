@@ -10,7 +10,7 @@ interface Style {
   name: string;
   description: string;
   price: number;
-  preview_image: string | null;
+  preview_image: string[] | null;
   category_id: number;
 }
 
@@ -18,7 +18,7 @@ const PLACEHOLDER_IMAGES = [
   'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=500&fit=crop',
   'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=500&fit=crop',
   'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=500&fit=crop',
-  'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=500&fit=crop'
+  'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=500&fit=crop',
 ];
 
 export default function HomePage() {
@@ -58,7 +58,7 @@ export default function HomePage() {
 
   const loadPopularStyles = async () => {
     try {
-      const response = await apiClient.get('/styles');
+      const response = await apiClient.get<Style[]>('/styles');
       setStyles(response.data);
     } catch (error) {
       console.error('Error loading styles:', error);
@@ -67,7 +67,7 @@ export default function HomePage() {
 
   const loadAllStyles = async () => {
     try {
-      const response = await apiClient.get('/styles');
+      const response = await apiClient.get<Style[]>('/styles');
       setAllStyles(response.data);
     } catch (error) {
       console.error('Error loading all styles:', error);
@@ -83,7 +83,7 @@ export default function HomePage() {
         .filter(
           (style) =>
             style.name.toLowerCase().includes(query) ||
-            style.description.toLowerCase().includes(query)
+            style.description.toLowerCase().includes(query),
         )
         .slice(0, 5);
       setSuggestions(filtered);
@@ -118,12 +118,11 @@ export default function HomePage() {
   const totalPages = Math.ceil(styles.length / stylesPerPage);
   const displayedStyles = styles.slice(
     currentPage * stylesPerPage,
-    (currentPage + 1) * stylesPerPage
+    (currentPage + 1) * stylesPerPage,
   );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-pink-50">
-      {/* Кнопка корзины */}
       <button
         onClick={() => navigate('/cart')}
         className="fixed top-4 right-4 z-50 bg-white px-3 py-2 rounded-full shadow-lg hover:shadow-xl transition-all flex items-center gap-1.5"
@@ -134,7 +133,6 @@ export default function HomePage() {
         )}
       </button>
 
-      {/* Кнопка Мои заказы */}
       <button
         onClick={() => navigate('/my-orders')}
         className="fixed top-3 right-20 z-50 bg-white px-3 py-2 rounded-full shadow-lg flex items-center gap-1.5 border border-gray-200"
@@ -142,13 +140,12 @@ export default function HomePage() {
         <Package className="w-5 h-5 text-gray-700" />
       </button>
 
-      {/* Героическая секция */}
       <div className="relative h-[340px] overflow-hidden">
         <div
           className="absolute inset-0 bg-cover bg-center"
           style={{
             backgroundImage:
-              "url('https://images.unsplash.com/photo-1534088568595-a066f410bcda?w=1920&h=1080&fit=crop')"
+              "url('https://images.unsplash.com/photo-1534088568595-a066f410bcda?w=1920&h=1080&fit=crop')",
           }}
         />
 
@@ -161,7 +158,6 @@ export default function HomePage() {
             Создай фото в любом стиле за секунды с помощью нейросети
           </p>
 
-          {/* Поиск + кнопка на одной линии */}
           <form onSubmit={handleSearch} className="w-full max-w-xs">
             <div ref={searchRef} className="relative">
               <div className="flex items-center gap-2">
@@ -184,32 +180,37 @@ export default function HomePage() {
 
               {showSuggestions && suggestions.length > 0 && (
                 <div className="absolute left-0 right-0 mt-2 bg-white rounded-xl shadow-2xl overflow-hidden z-50">
-                  {suggestions.map((style, index) => (
-                    <div
-                      key={style.id}
-                      onClick={() => handleSelectSuggestion(style)}
-                      className="flex items-center gap-3 p-3 hover:bg-blue-50 cursor-pointer transition-colors border-b border-gray-100 last:border-b-0"
-                    >
-                      <div className="w-12 h-12 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100">
-                        <img
-                          src={
-                            style.preview_image ||
-                            PLACEHOLDER_IMAGES[index % PLACEHOLDER_IMAGES.length]
-                          }
-                          alt={style.name}
-                          className="w-full h-full object-cover"
-                        />
+                  {suggestions.map((style, index) => {
+                    const mainImage =
+                      Array.isArray(style.preview_image) &&
+                      style.preview_image.length > 0
+                        ? style.preview_image[0]
+                        : PLACEHOLDER_IMAGES[index % PLACEHOLDER_IMAGES.length];
+
+                    return (
+                      <div
+                        key={style.id}
+                        onClick={() => handleSelectSuggestion(style)}
+                        className="flex items-center gap-3 p-3 hover:bg-blue-50 cursor-pointer transition-colors border-b border-gray-100 last:border-b-0"
+                      >
+                        <div className="w-12 h-12 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100">
+                          <img
+                            src={mainImage}
+                            alt={style.name}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-gray-800 text-sm">
+                            {style.name}
+                          </h4>
+                          <p className="text-blue-600 font-bold text-xs">
+                            от {style.price} ₽
+                          </p>
+                        </div>
                       </div>
-                      <div className="flex-1">
-                        <h4 className="font-semibold text-gray-800 text-sm">
-                          {style.name}
-                        </h4>
-                        <p className="text-blue-600 font-bold text-xs">
-                          от {style.price} ₽
-                        </p>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -217,7 +218,6 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Популярные стили */}
       <div className="px-4 py-6 bg-gradient-to-b from-pink-50 to-white">
         <div className="flex items-center gap-2.5 mb-4">
           <div className="w-9 h-9 bg-gradient-to-br from-orange-400 to-pink-500 rounded-xl flex items-center justify-center shadow-md">
@@ -230,31 +230,36 @@ export default function HomePage() {
         </div>
 
         <div className="grid grid-cols-2 gap-3 mb-4">
-          {displayedStyles.map((style, index) => (
-            <div
-              key={style.id}
-              onClick={() => navigate(`/style/${style.id}`)}
-              className="bg-white rounded-2xl shadow-sm overflow-hidden cursor-pointer transition-all hover:shadow-md active:scale-[0.98]"
-            >
-              <div className="w-full aspect-[3/4] overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
-                <img
-                  src={
-                    style.preview_image ||
-                    PLACEHOLDER_IMAGES[index % PLACEHOLDER_IMAGES.length]
-                  }
-                  alt={style.name}
-                  className="w-full h-full object-cover"
-                />
-              </div>
+          {displayedStyles.map((style, index) => {
+            const mainImage =
+              Array.isArray(style.preview_image) &&
+              style.preview_image.length > 0
+                ? style.preview_image[0]
+                : PLACEHOLDER_IMAGES[index % PLACEHOLDER_IMAGES.length];
 
-              <div className="px-3 py-2">
-                <h3 className="font-bold text-sm text-gray-800 line-clamp-1 mb-0.5">
-                  {style.name}
-                </h3>
-                <p className="text-gray-500 text-xs">от {style.price} ₽</p>
+            return (
+              <div
+                key={style.id}
+                onClick={() => navigate(`/style/${style.id}`)}
+                className="bg-white rounded-2xl shadow-sm overflow-hidden cursor-pointer transition-all hover:shadow-md active:scale-[0.98]"
+              >
+                <div className="w-full aspect-[3/4] overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
+                  <img
+                    src={mainImage}
+                    alt={style.name}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+
+                <div className="px-3 py-2">
+                  <h3 className="font-bold text-sm text-gray-800 line-clamp-1 mb-0.5">
+                    {style.name}
+                  </h3>
+                  <p className="text-gray-500 text-xs">от {style.price} ₽</p>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {totalPages > 1 && (
