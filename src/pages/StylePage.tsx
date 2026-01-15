@@ -9,19 +9,12 @@ interface Style {
   name: string;
   description: string;
   price: number;
-  preview_image: string | null;
+  preview_image: string[] | null;
   category_id: number;
   category?: {
     name: string;
   };
 }
-
-const PLACEHOLDER_IMAGES = [
-  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&h=1000&fit=crop',
-  'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=800&h=1000&fit=crop',
-  'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=800&h=1000&fit=crop',
-  'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=800&h=1000&fit=crop',
-];
 
 function SwipeImage({
   images,
@@ -63,6 +56,14 @@ function SwipeImage({
       setCurrentIndex(currentIndex - 1);
     }
   };
+
+  if (images.length === 0) {
+    return (
+      <div className="w-full bg-black flex items-center justify-center select-none">
+        <div className="w-full h-auto max-h-[360px] bg-gray-800" />
+      </div>
+    );
+  }
 
   return (
     <>
@@ -116,17 +117,26 @@ export default function StylePage() {
 
   const loadStyle = async () => {
     try {
-      const response = await apiClient.get(`/styles/${id}`);
+      const response = await apiClient.get<Style>(`/styles/${id}`);
       setStyle(response.data);
+      setCurrentImageIndex(0);
     } catch (error) {
       console.error('Error loading style:', error);
     }
   };
 
   const handleAddToCart = () => {
-    if (style) {
-      addToCart(style);
-    }
+    if (!style) return;
+
+    const mainImage =
+      Array.isArray(style.preview_image) && style.preview_image.length > 0
+        ? style.preview_image[0]
+        : style.preview_image || '';
+
+    addToCart({
+      ...style,
+      preview_image: mainImage,
+    } as any);
   };
 
   const isInCart = style ? cart.some((item) => item.id === style.id) : false;
@@ -135,14 +145,18 @@ export default function StylePage() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="w-16 h-16 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
           <p className="text-gray-600">Загрузка...</p>
         </div>
       </div>
     );
   }
 
-  const images = [style.preview_image || PLACEHOLDER_IMAGES[0], ...PLACEHOLDER_IMAGES.slice(1, 4)];
+  const images = Array.isArray(style.preview_image)
+    ? style.preview_image
+    : style.preview_image
+    ? [style.preview_image]
+    : [];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 pb-32">
