@@ -33,6 +33,7 @@ export default function OrderPage() {
           setPaymentStatus('failed');
         }
       } catch (e) {
+        console.error('Status check error:', e);
       }
     }, 3000);
 
@@ -45,26 +46,34 @@ export default function OrderPage() {
     try {
       setIsPaying(true);
 
-      const telegramUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString() || '';
-      const username = window.Telegram?.WebApp?.initDataUnsafe?.user?.username || '';
-      const first_name = window.Telegram?.WebApp?.initDataUnsafe?.user?.first_name || '';
+      // Получаем Telegram данные с fallback
+      const telegramUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString() || '123456789';
+      const username = window.Telegram?.WebApp?.initDataUnsafe?.user?.username || 'test_user';
+      const first_name = window.Telegram?.WebApp?.initDataUnsafe?.user?.first_name || 'Test User';
+
+      console.log('📦 Creating order with:', { telegramUserId, username, first_name, totalPrice });
+
+      const formData = new FormData();
+      formData.append('telegram_user_id', telegramUserId);
+      formData.append('username', username);
+      formData.append('first_name', first_name);
+      formData.append('total_price', totalPrice.toFixed(2));
+      formData.append('styles', JSON.stringify(cart));
 
       const createOrderRes = await fetch(`${API_URL}/orders`, {
         method: 'POST',
-        body: (() => {
-          const formData = new FormData();
-          formData.append('telegram_user_id', telegramUserId);
-          formData.append('username', username);
-          formData.append('first_name', first_name);
-          formData.append('total_price', totalPrice.toFixed(2));
-          formData.append('styles', JSON.stringify(cart));
-          return formData;
-        })(),
+        body: formData,
       });
+
+      if (!createOrderRes.ok) {
+        throw new Error(`Order creation failed: ${createOrderRes.status}`);
+      }
 
       const createdOrder = await createOrderRes.json();
       const newOrderId = createdOrder.id as number;
       setOrderId(newOrderId);
+
+      console.log('✅ Order created:', newOrderId);
 
       const qrRes = await fetch(`${API_URL}/payments/tochka/qr`, {
         method: 'POST',
@@ -72,9 +81,16 @@ export default function OrderPage() {
         body: JSON.stringify({ orderId: newOrderId }),
       });
 
+      if (!qrRes.ok) {
+        throw new Error(`QR creation failed: ${qrRes.status}`);
+      }
+
       const qrData = await qrRes.json();
       setQrPayload(qrData.qrPayload);
+
+      console.log('✅ QR ready');
     } catch (e) {
+      console.error('❌ Payment error:', e);
       setPaymentStatus('failed');
     } finally {
       setIsPaying(false);
@@ -97,10 +113,10 @@ export default function OrderPage() {
             </p>
             <button
               onClick={handleCreateOrderAndPay}
-              className="w-full py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-2xl font-bold text-lg shadow-lg"
+              className="w-full py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-2xl font-bold text-lg shadow-lg hover:shadow-xl transition-all disabled:opacity-50"
               disabled={isPaying}
             >
-              Перейти к оплате через СБП
+              {isPaying ? 'Создаём заказ...' : 'Перейти к оплате через СБП'}
             </button>
           </>
         )}
