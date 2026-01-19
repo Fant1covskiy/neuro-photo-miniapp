@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import QRCode from 'qrcode.react';
+import QRCode from 'react-qr-code';
 import { useCart } from '../context/CartContext';
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -45,7 +45,6 @@ export default function OrderPage() {
     try {
       setIsPaying(true);
 
-      const photos: string[] = [];
       const telegramUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString() || '';
       const username = window.Telegram?.WebApp?.initDataUnsafe?.user?.username || '';
       const first_name = window.Telegram?.WebApp?.initDataUnsafe?.user?.first_name || '';
@@ -59,7 +58,6 @@ export default function OrderPage() {
           formData.append('first_name', first_name);
           formData.append('total_price', totalPrice.toFixed(2));
           formData.append('styles', JSON.stringify(cart));
-          photos.forEach((p, i) => formData.append('photos', p));
           return formData;
         })(),
       });

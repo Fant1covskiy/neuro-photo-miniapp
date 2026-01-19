@@ -11,4 +11,7 @@ export default defineConfig({
     outDir: 'dist',
     emptyOutDir: true,
   },
+  optimizeDeps: {
+    include: ['react-qr-code']
+  }
 })
