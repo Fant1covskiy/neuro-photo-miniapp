@@ -9,7 +9,7 @@ export default function OrderPage() {
   const navigate = useNavigate();
   const { cart, totalPrice, clearCart } = useCart();
   const [orderId, setOrderId] = useState<number | null>(null);
-  const [qrPayload, setQrPayload] = useState<string | null>(null);
+  const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
   const [isPaying, setIsPaying] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<'idle' | 'waiting' | 'paid' | 'failed'>('idle');
 
@@ -20,15 +20,15 @@ export default function OrderPage() {
 
     const interval = setInterval(async () => {
       try {
-        const res = await fetch(`${API_URL}/payments/tochka/status/${orderId}`);
+        const res = await fetch(`${API_URL}/api/orders/${orderId}/status`);
         const data = await res.json();
 
-        if (data.payment_status === 'PAID') {
+        if (data.status === 'paid') {
           clearInterval(interval);
           setPaymentStatus('paid');
           clearCart();
-          navigate('/success');
-        } else if (data.payment_status === 'FAILED') {
+          setTimeout(() => navigate('/success'), 500);
+        } else if (data.status === 'failed' || data.status === 'cancelled') {
           clearInterval(interval);
           setPaymentStatus('failed');
         }
@@ -47,51 +47,55 @@ export default function OrderPage() {
       setIsPaying(true);
 
       // Получаем Telegram данные с fallback
-      const telegramUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString() || '123456789';
-      const username = window.Telegram?.WebApp?.initDataUnsafe?.user?.username || 'test_user';
-      const first_name = window.Telegram?.WebApp?.initDataUnsafe?.user?.first_name || 'Test User';
+      const tg = window.Telegram?.WebApp;
+      const telegramUserId = tg?.initDataUnsafe?.user?.id?.toString() || 'test_123456789';
+      const username = tg?.initDataUnsafe?.user?.username || 'test_user';
+      const firstName = tg?.initDataUnsafe?.user?.first_name || 'Test User';
 
-      console.log('📦 Creating order with:', { telegramUserId, username, first_name, totalPrice });
+      console.log('📦 Creating order:', { telegramUserId, username, firstName, totalPrice });
 
-      const formData = new FormData();
-      formData.append('telegram_user_id', telegramUserId);
-      formData.append('username', username);
-      formData.append('first_name', first_name);
-      formData.append('total_price', totalPrice.toFixed(2));
-      formData.append('styles', JSON.stringify(cart));
+      // Подсчитываем общее количество фото
+      const totalImages = cart.length * 10; // Каждый стиль = 10 фото
 
-      const createOrderRes = await fetch(`${API_URL}/orders`, {
+      // Создаём заказ
+      const orderRes = await fetch(`${API_URL}/api/orders`, {
         method: 'POST',
-        body: formData,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          telegramUserId,
+          username,
+          firstName,
+          packageType: 'basic',
+          imageCount: totalImages,
+          totalPrice: totalPrice,
+        }),
       });
 
-      if (!createOrderRes.ok) {
-        throw new Error(`Order creation failed: ${createOrderRes.status}`);
+      if (!orderRes.ok) {
+        const errorText = await orderRes.text();
+        throw new Error(`Order creation failed: ${orderRes.status} - ${errorText}`);
       }
 
-      const createdOrder = await createOrderRes.json();
-      const newOrderId = createdOrder.id as number;
+      const orderData = await orderRes.json();
+      const newOrderId = orderData.id;
       setOrderId(newOrderId);
 
       console.log('✅ Order created:', newOrderId);
 
-      const qrRes = await fetch(`${API_URL}/payments/tochka/qr`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderId: newOrderId }),
-      });
-
-      if (!qrRes.ok) {
-        throw new Error(`QR creation failed: ${qrRes.status}`);
+      // Получаем QR код
+      const qrUrl = orderData.qrCodeUrl;
+      
+      if (!qrUrl) {
+        throw new Error('QR code URL not received');
       }
 
-      const qrData = await qrRes.json();
-      setQrPayload(qrData.qrPayload);
+      setQrCodeUrl(qrUrl);
+      console.log('✅ QR code ready:', qrUrl);
 
-      console.log('✅ QR ready');
     } catch (e) {
       console.error('❌ Payment error:', e);
       setPaymentStatus('failed');
+      alert('Ошибка создания заказа. Попробуйте ещё раз.');
     } finally {
       setIsPaying(false);
     }
@@ -102,18 +106,33 @@ export default function OrderPage() {
     return null;
   }
 
+  // Подсчёт общего количества фото
+  const totalImages = cart.length * 10;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 pb-24">
       <div className="px-4 py-6 space-y-4">
         <h1 className="text-2xl font-bold text-gray-800 mb-2">Оплата заказа</h1>
+        
         {!orderId && (
           <>
-            <p className="text-gray-600">
-              Сумма к оплате: <span className="font-bold">{totalPrice.toFixed(2)} ₽</span>
-            </p>
+            <div className="bg-white rounded-2xl shadow-lg p-6 space-y-4">
+              <div className="space-y-2">
+                <p className="text-gray-600">
+                  Выбрано стилей: <span className="font-bold">{cart.length}</span>
+                </p>
+                <p className="text-gray-600">
+                  Количество фотографий: <span className="font-bold">{totalImages}</span>
+                </p>
+                <p className="text-gray-600">
+                  Сумма к оплате: <span className="font-bold text-2xl text-indigo-600">{totalPrice.toFixed(0)} ₽</span>
+                </p>
+              </div>
+            </div>
+
             <button
               onClick={handleCreateOrderAndPay}
-              className="w-full py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-2xl font-bold text-lg shadow-lg hover:shadow-xl transition-all disabled:opacity-50"
+              className="w-full py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-2xl font-bold text-lg shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={isPaying}
             >
               {isPaying ? 'Создаём заказ...' : 'Перейти к оплате через СБП'}
@@ -121,21 +140,45 @@ export default function OrderPage() {
           </>
         )}
 
-        {orderId && qrPayload && (
+        {orderId && qrCodeUrl && (
           <div className="mt-8 bg-white rounded-2xl shadow-lg p-6 flex flex-col items-center">
             <h2 className="text-xl font-bold text-gray-800 mb-2">Оплата через СБП</h2>
             <p className="text-gray-600 text-center mb-4">
-              Отсканируйте QR-код в приложении банка, чтобы оплатить заказ.
+              Отсканируйте QR-код в приложении вашего банка
             </p>
-            <QRCode value={qrPayload} size={240} />
-            <p className="mt-4 text-sm text-gray-500">
-              После оплаты окно автоматически обновится.
-            </p>
-            {paymentStatus === 'failed' && (
-              <p className="mt-2 text-sm text-red-600">
-                Оплата не прошла. Попробуйте ещё раз или обратитесь в поддержку.
+            
+            <div className="bg-white p-4 rounded-xl shadow-md">
+              <QRCode value={qrCodeUrl} size={240} />
+            </div>
+
+            <div className="mt-6 text-center space-y-2">
+              {paymentStatus === 'waiting' && (
+                <div className="flex items-center justify-center space-x-2">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-indigo-600"></div>
+                  <p className="text-sm text-gray-600">
+                    Ожидаем оплату...
+                  </p>
+                </div>
+              )}
+              
+              {paymentStatus === 'failed' && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                  <p className="text-sm text-red-600">
+                    ❌ Оплата не прошла. Попробуйте ещё раз или обратитесь в поддержку.
+                  </p>
+                  <button
+                    onClick={() => navigate('/catalog')}
+                    className="mt-2 text-indigo-600 hover:text-indigo-800 font-medium"
+                  >
+                    Вернуться к каталогу
+                  </button>
+                </div>
+              )}
+
+              <p className="text-xs text-gray-500">
+                Заказ №{orderId}
               </p>
-            )}
+            </div>
           </div>
         )}
       </div>
