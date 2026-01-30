@@ -1,20 +1,24 @@
 import apiClient from './client';
 
-export interface CreateOrderRequest {
-  telegramUserId: string;
-  username?: string;
-  firstName?: string;
-  styles?: any[];
-  price: number;
-}
-
-export interface CreateOrderResponse {
+export interface Order {
   id: number;
-  qrCodeUrl: string;
-  qrId: string;
+  telegram_user_id: string;
+  username: string | null;
+  first_name: string | null;
+  styles: any[];
+  photos: string[];
+  total_price: number;
+  status: string;
+  payment_status: string;
+  result_photos: string[] | null;
+  tochka_qr_id: string | null;
+  qr_code_url: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export const ordersApi = {
-  create: (payload: CreateOrderRequest) => apiClient.post<CreateOrderResponse>('/api/orders', payload),
-  getStatus: (orderId: number) => apiClient.get(`/api/orders/${orderId}/status`),
+  adminList: () => apiClient.get<Order[]>('/api/admin/orders'),
+  myList: (telegramUserId: string) => apiClient.get<Order[]>(`/api/orders/user/${telegramUserId}`),
+  getOne: (id: number) => apiClient.get<Order>(`/api/orders/${id}`),
 };

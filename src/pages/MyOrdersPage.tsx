@@ -34,10 +34,12 @@ export default function MyOrdersPage() {
   const loadOrders = async () => {
     try {
       setLoading(true);
-      const response = await apiClient.get(`/orders/user/${user?.id}`);
+      const telegramUserId = String(user?.id);
+      const response = await apiClient.get(`/api/orders/user/${telegramUserId}`);
       setOrders(response.data);
     } catch (error: any) {
       console.error('Error loading orders:', error);
+      setOrders([]);
     } finally {
       setLoading(false);
     }
@@ -46,7 +48,8 @@ export default function MyOrdersPage() {
   const parseStyles = (styles: string | Array<{ id: number; name: string; price: number }>) => {
     if (typeof styles === 'string') {
       try {
-        return JSON.parse(styles);
+        const parsed = JSON.parse(styles);
+        return Array.isArray(parsed) ? parsed : [];
       } catch (e) {
         console.error('Error parsing styles:', e);
         return [];
@@ -59,7 +62,8 @@ export default function MyOrdersPage() {
     if (!photos) return [];
     if (typeof photos === 'string') {
       try {
-        return JSON.parse(photos);
+        const parsed = JSON.parse(photos);
+        return Array.isArray(parsed) ? parsed : [];
       } catch (e) {
         console.error('Error parsing photos:', e);
         return [];
@@ -74,43 +78,42 @@ export default function MyOrdersPage() {
         return {
           icon: <Clock className="w-5 h-5 text-yellow-600" />,
           text: 'Ожидает',
-          color: 'bg-yellow-50 border-yellow-200 text-yellow-800'
+          color: 'bg-yellow-50 border-yellow-200 text-yellow-800',
         };
       case 'processing':
         return {
           icon: <Package className="w-5 h-5 text-blue-600" />,
           text: 'В обработке',
-          color: 'bg-blue-50 border-blue-200 text-blue-800'
+          color: 'bg-blue-50 border-blue-200 text-blue-800',
         };
       case 'completed':
         return {
           icon: <CheckCircle className="w-5 h-5 text-green-600" />,
           text: 'Готово',
-          color: 'bg-green-50 border-green-200 text-green-800'
+          color: 'bg-green-50 border-green-200 text-green-800',
         };
       case 'cancelled':
         return {
           icon: <AlertCircle className="w-5 h-5 text-red-600" />,
           text: 'Отменён',
-          color: 'bg-red-50 border-red-200 text-red-800'
+          color: 'bg-red-50 border-red-200 text-red-800',
         };
       default:
         return {
           icon: <Clock className="w-5 h-5 text-gray-600" />,
           text: 'Неизвестно',
-          color: 'bg-gray-50 border-gray-200 text-gray-800'
+          color: 'bg-gray-50 border-gray-200 text-gray-800',
         };
     }
   };
 
-  // 🔥 ОБНОВЛЕНО: теперь работает с Cloudinary URL
   const downloadImage = async (imageUrl: string, index: number) => {
     try {
       const response = await fetch(imageUrl);
       if (!response.ok) {
         throw new Error('Failed to download image');
       }
-      
+
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -130,10 +133,7 @@ export default function MyOrdersPage() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 pb-20">
       <div className="sticky top-0 z-50 bg-white shadow-sm">
         <div className="flex items-center gap-3 px-4 py-3">
-          <button
-            onClick={() => navigate('/')}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-          >
+          <button onClick={() => navigate('/')} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
             <ChevronLeft className="w-6 h-6 text-gray-800" />
           </button>
           <h1 className="text-xl font-bold text-gray-800">Мои заказы</h1>
@@ -170,7 +170,7 @@ export default function MyOrdersPage() {
               const statusInfo = getStatusInfo(order.status);
               const styles = parseStyles(order.styles);
               const resultPhotos = parsePhotos(order.result_photos);
-              
+
               return (
                 <div key={order.id} className="bg-white rounded-2xl shadow-md p-5 hover:shadow-lg transition-shadow">
                   <div className="flex items-start justify-between mb-4">
@@ -188,7 +188,7 @@ export default function MyOrdersPage() {
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Стили:</span>
                       <span className="font-semibold text-gray-800 text-right">
-                        {styles.map((s: any) => s.name).join(', ')}
+                        {(styles as any[]).map((s: any) => s.name).join(', ')}
                       </span>
                     </div>
                     <div className="flex justify-between text-sm">
@@ -207,21 +207,23 @@ export default function MyOrdersPage() {
                     <div className="border-t border-gray-200 pt-4 mt-4">
                       <div className="flex items-center gap-2 mb-3">
                         <CheckCircle className="w-5 h-5 text-green-600" />
-                        <p className="text-sm font-semibold text-gray-800">
-                          Готовые фото ({resultPhotos.length}):
-                        </p>
+                        <p className="text-sm font-semibold text-gray-800">Готовые фото ({resultPhotos.length}):</p>
                       </div>
                       <div className="grid grid-cols-3 gap-3">
                         {resultPhotos.map((imageUrl: string, index: number) => (
-                          <div key={index} className="relative aspect-square rounded-xl overflow-hidden bg-gray-100 group border-2 border-green-200">
-                            <img 
+                          <div
+                            key={index}
+                            className="relative aspect-square rounded-xl overflow-hidden bg-gray-100 group border-2 border-green-200"
+                          >
+                            <img
                               src={imageUrl}
-                              alt={`Result ${index + 1}`} 
-                              className="w-full h-full object-cover" 
+                              alt={`Result ${index + 1}`}
+                              className="w-full h-full object-cover"
                               onError={(e) => {
                                 console.error('Image failed to load:', imageUrl);
                                 const target = e.target as HTMLImageElement;
-                                target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Crect fill="%23f0f0f0" width="100" height="100"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" fill="%23999"%3EНет фото%3C/text%3E%3C/svg%3E';
+                                target.src =
+                                  'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Crect fill="%23f0f0f0" width="100" height="100"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" fill="%23999"%3E%D0%9D%D0%B5%D1%82%20%D1%84%D0%BE%D1%82%D0%BE%3C/text%3E%3C/svg%3E';
                               }}
                             />
                             <button
