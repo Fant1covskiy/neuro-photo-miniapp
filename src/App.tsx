@@ -17,9 +17,9 @@ function App() {
           <Route path="/catalog" element={<CatalogPage />} />
           <Route path="/style/:id" element={<StylePage />} />
           <Route path="/cart" element={<CartPage />} />
+          <Route path="/upload" element={<UploadPage />} />
           <Route path="/order" element={<OrderPage />} />
           <Route path="/success/:orderId" element={<SuccessPage />} />
-          <Route path="/upload/:orderId" element={<UploadPage />} />
           <Route path="/my-orders" element={<MyOrdersPage />} />
         </Routes>
       </div>

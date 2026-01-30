@@ -1,27 +1,31 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Upload, X, Check } from 'lucide-react';
-import apiClient from '../api/client';
+import { useCart } from '../context/CartContext';
+
+const LS_KEY = 'pending_upload_photos_base64';
 
 export default function UploadPage() {
   const navigate = useNavigate();
-  const { orderId } = useParams<{ orderId: string }>();
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const { cart, totalPrice } = useCart();
   const [previews, setPreviews] = useState<string[]>([]);
-  const [uploading, setUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (!orderId) navigate('/catalog');
-  }, [orderId, navigate]);
+    if (!cart.length) navigate('/catalog');
+    try {
+      const raw = localStorage.getItem(LS_KEY);
+      const arr = raw ? JSON.parse(raw) : [];
+      if (Array.isArray(arr)) setPreviews(arr);
+    } catch {}
+  }, [cart.length, navigate]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    if (files.length + selectedFiles.length > 3) {
+    if (files.length + previews.length > 3) {
       alert('Максимум 3 фото');
       return;
     }
-
-    setSelectedFiles([...selectedFiles, ...files]);
 
     files.forEach((file) => {
       const reader = new FileReader();
@@ -31,30 +35,27 @@ export default function UploadPage() {
   };
 
   const removeFile = (index: number) => {
-    setSelectedFiles(selectedFiles.filter((_, i) => i !== index));
     setPreviews(previews.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = async () => {
-    if (!orderId) return;
-    if (selectedFiles.length === 0) {
+  const handleGoPay = async () => {
+    if (previews.length === 0) {
       alert('Загрузите хотя бы одно фото');
       return;
     }
 
+    const price = Number(totalPrice);
+    if (!Number.isFinite(price) || price <= 0) {
+      alert('Цена должна быть больше 0');
+      return;
+    }
+
     try {
-      setUploading(true);
-
-      const formData = new FormData();
-      selectedFiles.forEach((file) => formData.append('photos', file));
-
-      await apiClient.post(`/api/orders/${orderId}/photos`, formData);
-
-      navigate(`/success/${orderId}`);
-    } catch (error: any) {
-      alert('Ошибка загрузки фото. Попробуйте ещё раз.');
+      setSaving(true);
+      localStorage.setItem(LS_KEY, JSON.stringify(previews));
+      navigate('/order');
     } finally {
-      setUploading(false);
+      setSaving(false);
     }
   };
 
@@ -62,10 +63,7 @@ export default function UploadPage() {
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 pb-32">
       <div className="sticky top-0 z-50 bg-white shadow-sm">
         <div className="flex items-center gap-3 px-4 py-3">
-          <button
-            onClick={() => navigate(-1)}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-          >
+          <button onClick={() => navigate(-1)} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
             <ChevronLeft className="w-6 h-6 text-gray-800" />
           </button>
           <h1 className="text-xl font-bold text-gray-800">Загрузка фото</h1>
@@ -92,7 +90,7 @@ export default function UploadPage() {
         </div>
 
         <div className="bg-white rounded-2xl shadow-md p-6 mb-6">
-          <h3 className="font-bold text-gray-800 mb-4">Ваши фото ({selectedFiles.length}/3)</h3>
+          <h3 className="font-bold text-gray-800 mb-4">Ваши фото ({previews.length}/3)</h3>
 
           {previews.length > 0 && (
             <div className="grid grid-cols-3 gap-3 mb-4">
@@ -110,7 +108,7 @@ export default function UploadPage() {
             </div>
           )}
 
-          {selectedFiles.length < 3 && (
+          {previews.length < 3 && (
             <label className="block">
               <input
                 type="file"
@@ -131,11 +129,11 @@ export default function UploadPage() {
 
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-2xl">
         <button
-          onClick={handleSubmit}
-          disabled={selectedFiles.length === 0 || uploading}
-          className="w-full py-4 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white rounded-2xl font-bold text-lg shadow-lg hover:shadow-xl transition-all transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+          onClick={handleGoPay}
+          disabled={previews.length === 0 || saving}
+          className="w-full py-4 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white rounded-2xl font-bold text-lg shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {uploading ? 'Отправка...' : 'Отправить фото'}
+          {saving ? 'Подготовка...' : 'Перейти к оплате'}
         </button>
       </div>
     </div>

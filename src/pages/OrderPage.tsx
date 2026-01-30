@@ -1,10 +1,20 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import QRCode from 'react-qr-code';
 import { useCart } from '../context/CartContext';
 import apiClient from '../api/client';
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://neuro-photo-backend-production.up.railway.app';
+const LS_KEY = 'pending_upload_photos_base64';
+
+function dataUrlToFile(dataUrl: string, name: string) {
+  const [meta, base64] = dataUrl.split(',');
+  const mime = (meta.match(/data:(.*?);base64/) || [])[1] || 'image/jpeg';
+  const bytes = atob(base64);
+  const arr = new Uint8Array(bytes.length);
+  for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
+  return new File([arr], name, { type: mime });
+}
 
 export default function OrderPage() {
   const navigate = useNavigate();
@@ -13,6 +23,22 @@ export default function OrderPage() {
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
   const [isPaying, setIsPaying] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<'idle' | 'waiting' | 'paid' | 'failed'>('idle');
+
+  const pendingPhotos = useMemo(() => {
+    try {
+      const raw = localStorage.getItem(LS_KEY);
+      const arr = raw ? JSON.parse(raw) : [];
+      return Array.isArray(arr) ? (arr as string[]) : [];
+    } catch {
+      return [];
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!pendingPhotos.length) {
+      navigate('/upload');
+    }
+  }, [pendingPhotos.length, navigate]);
 
   useEffect(() => {
     if (!orderId) return;
@@ -27,8 +53,21 @@ export default function OrderPage() {
         if (data.paymentStatus === 'paid') {
           clearInterval(interval);
           setPaymentStatus('paid');
-          clearCart();
-          setTimeout(() => navigate(`/success/${orderId}`), 500);
+
+          try {
+            const fd = new FormData();
+            pendingPhotos.slice(0, 3).forEach((p, idx) => {
+              fd.append('photos', dataUrlToFile(p, `photo-${idx + 1}.jpg`));
+            });
+
+            await apiClient.post(`/api/orders/${orderId}/photos`, fd);
+            localStorage.removeItem(LS_KEY);
+            clearCart();
+            navigate(`/success/${orderId}`);
+          } catch (e) {
+            alert('Оплата прошла, но загрузка фото не удалась. Попробуйте ещё раз.');
+            navigate('/upload');
+          }
         } else if (data.paymentStatus === 'failed') {
           clearInterval(interval);
           setPaymentStatus('failed');
@@ -37,10 +76,15 @@ export default function OrderPage() {
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [orderId, clearCart, navigate]);
+  }, [orderId, pendingPhotos, clearCart, navigate]);
 
   const handleCreateOrderAndPay = async () => {
     if (!cart.length || isPaying) return;
+
+    if (!pendingPhotos.length) {
+      navigate('/upload');
+      return;
+    }
 
     const price = Number(totalPrice);
     if (!Number.isFinite(price) || price <= 0) {
@@ -92,13 +136,17 @@ export default function OrderPage() {
             <div className="bg-white rounded-2xl shadow-lg p-6 space-y-4">
               <div className="space-y-2">
                 <p className="text-gray-600">
+                  Загружено фото: <span className="font-bold">{pendingPhotos.length}</span>
+                </p>
+                <p className="text-gray-600">
                   Выбрано стилей: <span className="font-bold">{cart.length}</span>
                 </p>
                 <p className="text-gray-600">
                   Количество фотографий: <span className="font-bold">{totalImages}</span>
                 </p>
                 <p className="text-gray-600">
-                  Сумма к оплате: <span className="font-bold text-2xl text-indigo-600">{Number(totalPrice).toFixed(0)} ₽</span>
+                  Сумма к оплате:{' '}
+                  <span className="font-bold text-2xl text-indigo-600">{Number(totalPrice).toFixed(0)} ₽</span>
                 </p>
               </div>
             </div>
@@ -125,10 +173,11 @@ export default function OrderPage() {
             <div className="mt-6 text-center space-y-2">
               {paymentStatus === 'waiting' && (
                 <div className="flex items-center justify-center space-x-2">
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-indigo-600"></div>
+                  <div className="animate-spin rounded-full h-5 h-5 w-5 border-b-2 border-indigo-600"></div>
                   <p className="text-sm text-gray-600">Ожидаем оплату...</p>
                 </div>
               )}
+              {paymentStatus === 'failed' && <p className="text-sm text-red-600">Оплата не прошла. Попробуйте ещё раз.</p>}
               <p className="text-xs text-gray-500">Заказ №{orderId}</p>
             </div>
           </div>
