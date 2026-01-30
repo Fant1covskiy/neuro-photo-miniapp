@@ -1,112 +1,62 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft, Upload, X, Check } from 'lucide-react';
-import { useCart } from '../context/CartContext';
-import { useTelegram } from '../hooks/useTelegram';
 import apiClient from '../api/client';
-
 
 export default function UploadPage() {
   const navigate = useNavigate();
-  // ❌ УДАЛЕНА СТРОКА: const { orderId } = useParams<{ orderId: string }>();
-  const { cart, totalPrice, clearCart } = useCart();
-  const { user } = useTelegram();
+  const { orderId } = useParams<{ orderId: string }>();
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
 
-
   useEffect(() => {
-    if (cart.length === 0) {
-      navigate('/catalog');
-    }
-  }, [cart.length, navigate]);
-
+    if (!orderId) navigate('/catalog');
+  }, [orderId, navigate]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    
     if (files.length + selectedFiles.length > 3) {
       alert('Максимум 3 фото');
       return;
     }
 
-
     setSelectedFiles([...selectedFiles, ...files]);
-    
-    files.forEach(file => {
+
+    files.forEach((file) => {
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreviews(prev => [...prev, reader.result as string]);
-      };
+      reader.onloadend = () => setPreviews((prev) => [...prev, reader.result as string]);
       reader.readAsDataURL(file);
     });
   };
-
 
   const removeFile = (index: number) => {
     setSelectedFiles(selectedFiles.filter((_, i) => i !== index));
     setPreviews(previews.filter((_, i) => i !== index));
   };
 
-
   const handleSubmit = async () => {
+    if (!orderId) return;
     if (selectedFiles.length === 0) {
       alert('Загрузите хотя бы одно фото');
       return;
     }
 
-
     try {
       setUploading(true);
 
-
-
-
       const formData = new FormData();
-      
-      formData.append('telegram_user_id', user?.id?.toString() || '0');
-      formData.append('username', user?.username || '');
-      formData.append('first_name', user?.first_name || '');
-      formData.append('total_price', totalPrice.toString());
-      formData.append('styles', JSON.stringify(cart.map(s => ({ 
-        id: s.id, 
-        name: s.name, 
-        price: s.price 
-      }))));
-      
-      selectedFiles.forEach((file) => {
-        formData.append('photos', file);
-      });
+      selectedFiles.forEach((file) => formData.append('photos', file));
 
+      await apiClient.post(`/api/orders/${orderId}/photos`, formData);
 
-      const response = await apiClient.post('/orders', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-
-
-
-
-      const createdOrderId = response.data.id;
-      navigate(`/success/${createdOrderId}`);
-      
-      setTimeout(() => {
-        clearCart();
-      }, 100);
+      navigate(`/success/${orderId}`);
     } catch (error: any) {
-      console.error('Error creating order:', error);
+      alert('Ошибка загрузки фото. Попробуйте ещё раз.');
     } finally {
       setUploading(false);
     }
   };
-
-
-  if (cart.length === 0) {
-    return null;
-  }
-
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 pb-32">
@@ -121,7 +71,6 @@ export default function UploadPage() {
           <h1 className="text-xl font-bold text-gray-800">Загрузка фото</h1>
         </div>
       </div>
-
 
       <div className="px-4 pt-6">
         <div className="bg-white rounded-2xl shadow-md p-6 mb-6">
@@ -142,10 +91,9 @@ export default function UploadPage() {
           </ul>
         </div>
 
-
         <div className="bg-white rounded-2xl shadow-md p-6 mb-6">
           <h3 className="font-bold text-gray-800 mb-4">Ваши фото ({selectedFiles.length}/3)</h3>
-          
+
           {previews.length > 0 && (
             <div className="grid grid-cols-3 gap-3 mb-4">
               {previews.map((preview, index) => (
@@ -161,7 +109,6 @@ export default function UploadPage() {
               ))}
             </div>
           )}
-
 
           {selectedFiles.length < 3 && (
             <label className="block">
@@ -180,34 +127,7 @@ export default function UploadPage() {
             </label>
           )}
         </div>
-
-
-        <div className="bg-white rounded-2xl shadow-md p-6">
-          <h3 className="font-bold text-gray-800 mb-3">Детали заказа</h3>
-          <div className="space-y-2 mb-4">
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Количество фото:</span>
-              <span className="font-semibold text-gray-800">{selectedFiles.length} шт</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Стили:</span>
-              <span className="font-semibold text-gray-800">{cart.length} шт</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Срок выполнения:</span>
-              <span className="font-semibold text-gray-800">24 часа</span>
-            </div>
-          </div>
-          
-          <div className="border-t border-gray-200 pt-3 flex items-center justify-between">
-            <span className="font-bold text-gray-800">Итого к оплате:</span>
-            <span className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">
-              {Number(totalPrice).toFixed(2)} ₽
-            </span>
-          </div>
-        </div>
       </div>
-
 
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-2xl">
         <button
@@ -215,7 +135,7 @@ export default function UploadPage() {
           disabled={selectedFiles.length === 0 || uploading}
           className="w-full py-4 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white rounded-2xl font-bold text-lg shadow-lg hover:shadow-xl transition-all transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
         >
-          {uploading ? 'Отправка...' : 'Оформить заказ'}
+          {uploading ? 'Отправка...' : 'Отправить фото'}
         </button>
       </div>
     </div>
