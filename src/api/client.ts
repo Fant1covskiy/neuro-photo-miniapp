@@ -1,24 +1,34 @@
 import axios from 'axios';
 import WebApp from '@twa-dev/sdk';
 
-// Hardcoded API URL - Version 2.0
 const API_URL = 'https://neuro-photo-backend-production.up.railway.app';
-
-console.log('🔥 API_URL:', API_URL);
-console.log('🚀 Client version: 2.0');
 
 export const apiClient = axios.create({
   baseURL: API_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
 });
 
 apiClient.interceptors.request.use((config) => {
   const initData = WebApp.initData;
+
+  config.headers = config.headers || {};
+
   if (initData) {
-    config.headers['x-telegram-init-data'] = initData;
+    (config.headers as any)['x-telegram-init-data'] = initData;
   }
+
+  const isFormData =
+    typeof FormData !== 'undefined' &&
+    config.data &&
+    config.data instanceof FormData;
+
+  if (isFormData) {
+    if ((config.headers as any)['Content-Type']) {
+      delete (config.headers as any)['Content-Type'];
+    }
+  } else {
+    (config.headers as any)['Content-Type'] = 'application/json';
+  }
+
   return config;
 });
 
