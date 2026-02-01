@@ -1,28 +1,39 @@
-import { Routes, Route } from 'react-router-dom';
+import { useEffect } from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import HomePage from './pages/HomePage';
 import CatalogPage from './pages/CatalogPage';
-import StylePage from './pages/StylePage';
 import CartPage from './pages/CartPage';
 import OrderPage from './pages/OrderPage';
+import MyOrdersPage from './pages/MyOrdersPage';
 import SuccessPage from './pages/SuccessPage';
 import UploadPage from './pages/UploadPage';
-import MyOrdersPage from './pages/MyOrdersPage';
+import StylePage from './pages/StylePage';
+import { useTelegram } from './hooks/useTelegram';
+import './App.css';
 
 function App() {
+  const { tg } = useTelegram();
+
+  useEffect(() => {
+    if (tg) {
+      tg.ready();
+      tg.expand();
+    }
+  }, [tg]);
+
   return (
-    <div className="min-h-screen flex justify-center items-center bg-gradient-to-br from-slate-200 to-slate-300">
-      <div className="w-full max-w-[430px] min-h-screen bg-white shadow-2xl overflow-hidden relative">
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/catalog" element={<CatalogPage />} />
-          <Route path="/style/:id" element={<StylePage />} />
-          <Route path="/cart" element={<CartPage />} />
-          <Route path="/upload" element={<UploadPage />} />
-          <Route path="/order" element={<OrderPage />} />
-          <Route path="/success/:orderId" element={<SuccessPage />} />
-          <Route path="/my-orders" element={<MyOrdersPage />} />
-        </Routes>
-      </div>
+    <div className="App min-h-screen bg-gray-50 pb-20">
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/catalog" element={<CatalogPage />} />
+        <Route path="/cart" element={<CartPage />} />
+        <Route path="/upload" element={<UploadPage />} />
+        <Route path="/order/:id" element={<OrderPage />} />
+        <Route path="/my-orders" element={<MyOrdersPage />} />
+        <Route path="/success" element={<SuccessPage />} />
+        <Route path="/style/:id" element={<StylePage />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
     </div>
   );
 }
