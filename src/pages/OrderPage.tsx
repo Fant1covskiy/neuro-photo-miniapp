@@ -20,7 +20,7 @@ export default function OrderPage() {
   const navigate = useNavigate();
   const { cart, totalPrice, clearCart } = useCart();
   const [orderId, setOrderId] = useState<number | null>(null);
-  const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
+  const [qrData, setQrData] = useState<any>(null);
   const [isPaying, setIsPaying] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<'idle' | 'waiting' | 'paid' | 'failed'>('idle');
 
@@ -100,7 +100,7 @@ export default function OrderPage() {
       const username = tg?.initDataUnsafe?.user?.username || 'test_user';
       const firstName = tg?.initDataUnsafe?.user?.first_name || 'Test User';
 
-      const response = await apiClient.post('/api/orders', {
+      const orderResponse = await apiClient.post('/api/orders', {
         telegramUserId,
         username,
         firstName,
@@ -108,15 +108,22 @@ export default function OrderPage() {
         price,
       });
 
-      const data = response.data;
-      setOrderId(data.id);
-      setQrCodeUrl(data.qrCodeUrl);
-    } catch (e) {
+      const orderData = orderResponse.data;
+      setOrderId(orderData.id);
+
+      const qrResponse = await apiClient.post('/api/payments/tochka/qr', { orderId: orderData.id });
+      setQrData(qrResponse.data);
+    } catch (e: any) {
       setPaymentStatus('failed');
       alert('Ошибка создания заказа. Попробуйте ещё раз.');
     } finally {
       setIsPaying(false);
     }
+  };
+
+  const handlePayByLink = () => {
+    if (!qrData?.payUrl) return;
+    (window as any).Telegram?.WebApp?.openLink(qrData.payUrl);
   };
 
   if (!cart.length && !orderId) {
@@ -161,19 +168,27 @@ export default function OrderPage() {
           </>
         )}
 
-        {orderId && qrCodeUrl && (
+        {orderId && qrData && (
           <div className="mt-8 bg-white rounded-2xl shadow-lg p-6 flex flex-col items-center">
             <h2 className="text-xl font-bold text-gray-800 mb-2">Оплата через СБП</h2>
             <p className="text-gray-600 text-center mb-4">Отсканируйте QR-код в приложении вашего банка</p>
 
             <div className="bg-white p-4 rounded-xl shadow-md">
-              <QRCode value={qrCodeUrl} size={240} />
+              <QRCode value={qrData.qrPayload} size={240} />
             </div>
+
+            <button
+              onClick={handlePayByLink}
+              className="mt-6 w-full max-w-xs py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl font-bold shadow-lg hover:shadow-xl transition-all"
+              disabled={!qrData.payUrl}
+            >
+              Оплатить по ссылке
+            </button>
 
             <div className="mt-6 text-center space-y-2">
               {paymentStatus === 'waiting' && (
                 <div className="flex items-center justify-center space-x-2">
-                  <div className="animate-spin rounded-full h-5 h-5 w-5 border-b-2 border-indigo-600"></div>
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-indigo-600"></div>
                   <p className="text-sm text-gray-600">Ожидаем оплату...</p>
                 </div>
               )}
