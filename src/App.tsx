@@ -15,8 +15,10 @@ function App() {
   const { tg } = useTelegram();
 
   useEffect(() => {
-    tg.ready();
-    tg.expand();
+    if (tg) {
+      tg.ready();
+      tg.expand();
+    }
   }, [tg]);
 
   return (
