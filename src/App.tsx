@@ -15,10 +15,8 @@ function App() {
   const { tg } = useTelegram();
 
   useEffect(() => {
-    if (tg) {
-      tg.ready();
-      tg.expand();
-    }
+    tg.ready();
+    tg.expand();
   }, [tg]);
 
   return (
@@ -28,6 +26,7 @@ function App() {
         <Route path="/catalog" element={<CatalogPage />} />
         <Route path="/cart" element={<CartPage />} />
         <Route path="/upload" element={<UploadPage />} />
+        <Route path="/order" element={<OrderPage />} />
         <Route path="/order/:id" element={<OrderPage />} />
         <Route path="/my-orders" element={<MyOrdersPage />} />
         <Route path="/success" element={<SuccessPage />} />

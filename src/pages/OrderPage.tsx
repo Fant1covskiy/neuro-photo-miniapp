@@ -1,140 +1,187 @@
-import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import QRCode from 'react-qr-code';
-import { getOrder } from '../api/orders';
+import { useCart } from '../context/CartContext';
+import apiClient from '../api/client';
+
+const API_URL = import.meta.env.VITE_API_URL || 'https://neuro-photo-backend-production.up.railway.app';
+const LS_KEY = 'pending_upload_photos_base64';
+
+function dataUrlToFile(dataUrl: string, name: string) {
+  const [meta, base64] = dataUrl.split(',');
+  const mime = (meta.match(/data:(.*?);base64/) || [])[1] || 'image/jpeg';
+  const bytes = atob(base64);
+  const arr = new Uint8Array(bytes.length);
+  for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
+  return new File([arr], name, { type: mime });
+}
 
 export default function OrderPage() {
-  const params = useParams();
-  // Пытаемся найти ID под разными именами (id или orderId)
-  const orderId = params.orderId || params.id;
-  
-  const [paymentStatus, setPaymentStatus] = useState('waiting');
-  const [qrCodeUrl, setQrCodeUrl] = useState('');
-  const [error, setError] = useState('');
+  const navigate = useNavigate();
+  const { cart, totalPrice, clearCart } = useCart();
+  const [orderId, setOrderId] = useState<number | null>(null);
+  const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
+  const [isPaying, setIsPaying] = useState(false);
+  const [paymentStatus, setPaymentStatus] = useState<'idle' | 'waiting' | 'paid' | 'failed'>('idle');
+
+  const pendingPhotos = useMemo(() => {
+    try {
+      const raw = localStorage.getItem(LS_KEY);
+      const arr = raw ? JSON.parse(raw) : [];
+      return Array.isArray(arr) ? (arr as string[]) : [];
+    } catch {
+      return [];
+    }
+  }, []);
 
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    if (!pendingPhotos.length) {
+      navigate('/upload');
+    }
+  }, [pendingPhotos.length, navigate]);
 
-    const checkStatus = async () => {
+  useEffect(() => {
+    if (!orderId) return;
+
+    setPaymentStatus('waiting');
+
+    const interval = setInterval(async () => {
       try {
-        if (!orderId) {
-          setError('ID заказа не найден в ссылке (URL). Проверьте адрес.');
+        const res = await fetch(`${API_URL}/api/orders/${orderId}/status`);
+        const data = await res.json();
+
+        if (data.paymentStatus === 'paid') {
+          clearInterval(interval);
+          setPaymentStatus('paid');
+
+          try {
+            const fd = new FormData();
+            pendingPhotos.slice(0, 3).forEach((p, idx) => {
+              fd.append('photos', dataUrlToFile(p, `photo-${idx + 1}.jpg`));
+            });
+
+            await apiClient.post(`/api/orders/${orderId}/photos`, fd);
+            localStorage.removeItem(LS_KEY);
+            clearCart();
+            navigate(`/success/${orderId}`);
+          } catch (e) {
+            alert('Оплата прошла, но загрузка фото не удалась. Попробуйте ещё раз.');
+            navigate('/upload');
+          }
+        } else if (data.paymentStatus === 'failed') {
+          clearInterval(interval);
           setPaymentStatus('failed');
-          return;
         }
-
-        const order = await getOrder(Number(orderId));
-        
-        // Проверяем наличие ссылки в разных форматах (snake_case или camelCase)
-        const link = order.payment_url || order.paymentUrl || order.url;
-
-        if (link) {
-          setQrCodeUrl(link);
-        } else {
-           // Если ссылки нет, но заказ есть - возможно, он уже оплачен или ошибка генерации
-           if (order.status !== 'PAID') {
-             console.warn('Ссылка на оплату не пришла с бэкенда', order);
-           }
-        }
-
-        if (order.status === 'PAID') {
-          setPaymentStatus('success');
-          if (interval) clearInterval(interval);
-        } else if (order.status === 'FAILED') {
-          setPaymentStatus('failed');
-          setError('Статус заказа: Ошибка (FAILED)');
-          if (interval) clearInterval(interval);
-        }
-      } catch (err: any) {
-        console.error(err);
-        // Выводим ошибку на экран, чтобы ты сразу понял, в чем дело
-        setError(err.message || 'Ошибка соединения с сервером');
-        setPaymentStatus('failed');
-      }
-    };
-
-    checkStatus();
-    interval = setInterval(checkStatus, 3000);
+      } catch (e) {}
+    }, 3000);
 
     return () => clearInterval(interval);
-  }, [orderId]);
+  }, [orderId, pendingPhotos, clearCart, navigate]);
 
-  const handlePaymentClick = () => {
-    if (qrCodeUrl) {
-      window.location.href = qrCodeUrl;
+  const handleCreateOrderAndPay = async () => {
+    if (!cart.length || isPaying) return;
+
+    if (!pendingPhotos.length) {
+      navigate('/upload');
+      return;
+    }
+
+    const price = Number(totalPrice);
+    if (!Number.isFinite(price) || price <= 0) {
+      alert('Цена должна быть больше 0');
+      return;
+    }
+
+    try {
+      setIsPaying(true);
+
+      const tg = (window as any).Telegram?.WebApp;
+      const telegramUserId = tg?.initDataUnsafe?.user?.id?.toString() || 'test_123456789';
+      const username = tg?.initDataUnsafe?.user?.username || 'test_user';
+      const firstName = tg?.initDataUnsafe?.user?.first_name || 'Test User';
+
+      const response = await apiClient.post('/api/orders', {
+        telegramUserId,
+        username,
+        firstName,
+        styles: cart,
+        price,
+      });
+
+      const data = response.data;
+      setOrderId(data.id);
+      setQrCodeUrl(data.qrCodeUrl);
+    } catch (e) {
+      setPaymentStatus('failed');
+      alert('Ошибка создания заказа. Попробуйте ещё раз.');
+    } finally {
+      setIsPaying(false);
     }
   };
 
-  if (paymentStatus === 'success') {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen p-4 text-center bg-gray-50">
-        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
-          <svg className="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-          </svg>
-        </div>
-        <h2 className="text-xl font-bold text-gray-800 mb-2">Оплата прошла успешно!</h2>
-        <p className="text-gray-600">Ваш заказ принят в работу.</p>
-      </div>
-    );
+  if (!cart.length && !orderId) {
+    navigate('/catalog');
+    return null;
   }
 
-  return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center pt-8 px-4">
-      <div className="bg-white rounded-2xl shadow-lg p-6 flex flex-col items-center w-full max-w-sm">
-        <h2 className="text-xl font-bold text-gray-800 mb-2">Оплата через СБП</h2>
-        
-        {/* Блок ошибок - теперь ты увидишь текст, если что-то не так */}
-        {error ? (
-           <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm text-center mb-4 w-full border border-red-200">
-             ⚠️ {error}
-           </div>
-        ) : (
-          <p className="text-gray-600 text-center mb-6 text-sm">
-            Отсканируйте QR-код или нажмите кнопку ниже для оплаты
-          </p>
-        )}
+  const totalImages = cart.length * 5;
 
-        {qrCodeUrl ? (
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 pb-24">
+      <div className="px-4 py-6 space-y-4">
+        <h1 className="text-2xl font-bold text-gray-800 mb-2">Оплата заказа</h1>
+
+        {!orderId && (
           <>
-            <div className="bg-white p-2 rounded-xl border border-gray-100 mb-6 shadow-inner">
-              <QRCode value={qrCodeUrl} size={200} />
+            <div className="bg-white rounded-2xl shadow-lg p-6 space-y-4">
+              <div className="space-y-2">
+                <p className="text-gray-600">
+                  Загружено фото: <span className="font-bold">{pendingPhotos.length}</span>
+                </p>
+                <p className="text-gray-600">
+                  Выбрано стилей: <span className="font-bold">{cart.length}</span>
+                </p>
+                <p className="text-gray-600">
+                  Количество фотографий: <span className="font-bold">{totalImages}</span>
+                </p>
+                <p className="text-gray-600">
+                  Сумма к оплате:{' '}
+                  <span className="font-bold text-2xl text-indigo-600">{Number(totalPrice).toFixed(0)} ₽</span>
+                </p>
+              </div>
             </div>
 
             <button
-              onClick={handlePaymentClick}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 px-4 rounded-xl active:scale-95 transition-transform shadow-md flex items-center justify-center space-x-2 mb-4"
+              onClick={handleCreateOrderAndPay}
+              className="w-full py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-2xl font-bold text-lg shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={isPaying}
             >
-              <span>📱</span>
-              <span>Оплатить через банк</span>
+              {isPaying ? 'Создаём заказ...' : 'Перейти к оплате через СБП'}
             </button>
-            
-            <p className="text-xs text-gray-400 text-center">
-              Нажмите кнопку, чтобы выбрать банк на этом устройстве
-            </p>
           </>
-        ) : (
-           /* Показываем спиннер только если нет ошибки и нет URL */
-           !error && (
-            <div className="w-full h-48 flex flex-col items-center justify-center space-y-4">
-              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
-              <p className="text-sm text-gray-400">Генерируем ссылку на оплату...</p>
-            </div>
-           )
         )}
 
-        <div className="w-full space-y-2 text-center mt-6 pt-4 border-t border-gray-100">
-          {paymentStatus === 'waiting' && !error && qrCodeUrl && (
-            <div className="flex items-center justify-center space-x-2">
-              <div className="animate-pulse w-2 h-2 bg-yellow-400 rounded-full"></div>
-              <p className="text-sm text-gray-500">Ожидаем подтверждения...</p>
+        {orderId && qrCodeUrl && (
+          <div className="mt-8 bg-white rounded-2xl shadow-lg p-6 flex flex-col items-center">
+            <h2 className="text-xl font-bold text-gray-800 mb-2">Оплата через СБП</h2>
+            <p className="text-gray-600 text-center mb-4">Отсканируйте QR-код в приложении вашего банка</p>
+
+            <div className="bg-white p-4 rounded-xl shadow-md">
+              <QRCode value={qrCodeUrl} size={240} />
             </div>
-          )}
-          
-          <p className="text-xs text-gray-400">
-            Заказ №{orderId || '...'}
-          </p>
-        </div>
+
+            <div className="mt-6 text-center space-y-2">
+              {paymentStatus === 'waiting' && (
+                <div className="flex items-center justify-center space-x-2">
+                  <div className="animate-spin rounded-full h-5 h-5 w-5 border-b-2 border-indigo-600"></div>
+                  <p className="text-sm text-gray-600">Ожидаем оплату...</p>
+                </div>
+              )}
+              {paymentStatus === 'failed' && <p className="text-sm text-red-600">Оплата не прошла. Попробуйте ещё раз.</p>}
+              <p className="text-xs text-gray-500">Заказ №{orderId}</p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
