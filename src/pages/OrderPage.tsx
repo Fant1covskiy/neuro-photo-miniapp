@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import QRCode from 'react-qr-code';
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink, Copy } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import apiClient from '../api/client';
 
@@ -25,6 +25,11 @@ function extractDeepLink(qrUrl: string): string {
     if (linkParam) {
       return decodeURIComponent(linkParam);
     }
+    
+    if (qrUrl.startsWith('bank100000000111://') || qrUrl.startsWith('https://qr.nspk.ru/')) {
+      return qrUrl;
+    }
+    
     return qrUrl;
   } catch {
     return qrUrl;
@@ -38,6 +43,7 @@ export default function OrderPage() {
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
   const [isPaying, setIsPaying] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<'idle' | 'waiting' | 'paid' | 'failed'>('idle');
+  const [copied, setCopied] = useState(false);
 
   const pendingPhotos = useMemo(() => {
     try {
@@ -141,6 +147,8 @@ export default function OrderPage() {
       setOrderId(data.id);
       setQrCodeUrl(data.qrCodeUrl);
       
+      console.log('QR URL:', data.qrCodeUrl);
+      
       sessionStorage.setItem(ORDER_ID_KEY, String(data.id));
     } catch (e) {
       setPaymentStatus('failed');
@@ -154,6 +162,7 @@ export default function OrderPage() {
     if (!qrCodeUrl) return;
 
     const deepLink = extractDeepLink(qrCodeUrl);
+    console.log('Opening deeplink:', deepLink);
 
     try {
       const tg = (window as any).Telegram?.WebApp;
@@ -164,6 +173,19 @@ export default function OrderPage() {
       }
     } catch {
       window.location.href = deepLink;
+    }
+  };
+
+  const copyToClipboard = async () => {
+    if (!qrCodeUrl) return;
+    
+    try {
+      const deepLink = extractDeepLink(qrCodeUrl);
+      await navigator.clipboard.writeText(deepLink);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      alert('Не удалось скопировать');
     }
   };
 
@@ -212,19 +234,29 @@ export default function OrderPage() {
         {orderId && qrCodeUrl && (
           <div className="mt-8 bg-white rounded-2xl shadow-lg p-6 flex flex-col items-center">
             <h2 className="text-xl font-bold text-gray-800 mb-2">Оплата через СБП</h2>
-            <p className="text-gray-600 text-center mb-4">Отсканируйте QR-код в приложении вашего банка</p>
+            <p className="text-gray-600 text-center mb-4">Отсканируйте QR-код или нажмите кнопку ниже</p>
 
             <div className="bg-white p-4 rounded-xl shadow-md">
               <QRCode value={qrCodeUrl} size={240} />
             </div>
 
-            <button
-              onClick={openPaymentLink}
-              className="w-full mt-4 py-3 bg-white border-2 border-indigo-600 text-indigo-600 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-indigo-50 transition-all"
-            >
-              <ExternalLink className="w-5 h-5" />
-              Открыть оплату в приложении
-            </button>
+            <div className="w-full space-y-2 mt-4">
+              <button
+                onClick={openPaymentLink}
+                className="w-full py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:shadow-lg transition-all"
+              >
+                <ExternalLink className="w-5 h-5" />
+                Открыть приложение банка
+              </button>
+
+              <button
+                onClick={copyToClipboard}
+                className="w-full py-3 bg-white border-2 border-gray-300 text-gray-700 rounded-xl font-semibold flex items-center justify-center gap-2 hover:bg-gray-50 transition-all"
+              >
+                <Copy className="w-4 h-4" />
+                {copied ? 'Скопировано!' : 'Скопировать ссылку'}
+              </button>
+            </div>
 
             <div className="mt-6 text-center space-y-2">
               {paymentStatus === 'waiting' && (
