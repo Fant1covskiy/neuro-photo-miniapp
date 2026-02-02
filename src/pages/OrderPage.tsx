@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import QRCode from 'react-qr-code';
+import { ExternalLink } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import apiClient from '../api/client';
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://neuro-photo-backend-production.up.railway.app';
 const LS_KEY = 'pending_upload_photos_base64';
+const ORDER_ID_KEY = 'current_order_id';
 
 function dataUrlToFile(dataUrl: string, name: string) {
   const [meta, base64] = dataUrl.split(',');
@@ -35,10 +37,19 @@ export default function OrderPage() {
   }, []);
 
   useEffect(() => {
-    if (!pendingPhotos.length) {
+    if (!orderId) {
+      const saved = sessionStorage.getItem(ORDER_ID_KEY);
+      if (saved) {
+        setOrderId(Number(saved));
+      }
+    }
+  }, [orderId]);
+
+  useEffect(() => {
+    if (!pendingPhotos.length && !orderId) {
       navigate('/upload');
     }
-  }, [pendingPhotos.length, navigate]);
+  }, [pendingPhotos.length, orderId, navigate]);
 
   useEffect(() => {
     if (!orderId) return;
@@ -61,9 +72,12 @@ export default function OrderPage() {
             });
 
             await apiClient.post(`/api/orders/${orderId}/photos`, fd);
+            
             localStorage.removeItem(LS_KEY);
+            sessionStorage.removeItem(ORDER_ID_KEY);
             clearCart();
-            navigate(`/success/${orderId}`);
+            
+            navigate(`/success/${orderId}`, { replace: true });
           } catch (e) {
             alert('Оплата прошла, но загрузка фото не удалась. Попробуйте ещё раз.');
             navigate('/upload');
@@ -72,7 +86,9 @@ export default function OrderPage() {
           clearInterval(interval);
           setPaymentStatus('failed');
         }
-      } catch (e) {}
+      } catch (e) {
+        console.error('Error checking payment status:', e);
+      }
     }, 3000);
 
     return () => clearInterval(interval);
@@ -111,6 +127,8 @@ export default function OrderPage() {
       const data = response.data;
       setOrderId(data.id);
       setQrCodeUrl(data.qrCodeUrl);
+      
+      sessionStorage.setItem(ORDER_ID_KEY, String(data.id));
     } catch (e) {
       setPaymentStatus('failed');
       alert('Ошибка создания заказа. Попробуйте ещё раз.');
@@ -119,7 +137,22 @@ export default function OrderPage() {
     }
   };
 
-  if (!cart.length && !orderId) {
+  const openPaymentLink = () => {
+    if (!qrCodeUrl) return;
+
+    try {
+      const tg = (window as any).Telegram?.WebApp;
+      if (tg?.openLink) {
+        tg.openLink(qrCodeUrl);
+      } else {
+        window.open(qrCodeUrl, '_blank');
+      }
+    } catch {
+      window.location.href = qrCodeUrl;
+    }
+  };
+
+  if (!cart.length && !orderId && paymentStatus === 'idle') {
     navigate('/catalog');
     return null;
   }
@@ -169,6 +202,14 @@ export default function OrderPage() {
             <div className="bg-white p-4 rounded-xl shadow-md">
               <QRCode value={qrCodeUrl} size={240} />
             </div>
+
+            <button
+              onClick={openPaymentLink}
+              className="w-full mt-4 py-3 bg-white border-2 border-indigo-600 text-indigo-600 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-indigo-50 transition-all"
+            >
+              <ExternalLink className="w-5 h-5" />
+              Открыть оплату в приложении
+            </button>
 
             <div className="mt-6 text-center space-y-2">
               {paymentStatus === 'waiting' && (

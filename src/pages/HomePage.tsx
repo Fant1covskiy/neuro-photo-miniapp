@@ -123,22 +123,30 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-pink-50">
-      <button
-        onClick={() => navigate('/cart')}
-        className="fixed top-4 right-4 z-50 bg-white px-3 py-2 rounded-full shadow-lg hover:shadow-xl transition-all flex items-center gap-1.5"
-      >
-        <ShoppingCart className="w-5 h-5 text-gray-700" />
-        {cart.length > 0 && (
-          <span className="text-gray-700 font-semibold text-sm">{cart.length}</span>
-        )}
-      </button>
+      <div className="sticky top-0 z-50 bg-white/90 backdrop-blur-sm border-b border-gray-200">
+        <div className="flex items-center justify-between px-4 py-3">
+          <h2 className="text-lg font-bold text-gray-800">НейроФото</h2>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => navigate('/my-orders')}
+              className="flex items-center gap-1.5 px-3 py-2 bg-white border border-gray-300 rounded-full shadow-sm hover:shadow-md transition-all"
+            >
+              <Package className="w-4 h-4 text-gray-700" />
+              <span className="text-xs font-semibold text-gray-700">Мои заказы</span>
+            </button>
 
-      <button
-        onClick={() => navigate('/my-orders')}
-        className="fixed top-3 right-20 z-50 bg-white px-3 py-2 rounded-full shadow-lg flex items-center gap-1.5 border border-gray-200"
-      >
-        <Package className="w-5 h-5 text-gray-700" />
-      </button>
+            <button
+              onClick={() => navigate('/cart')}
+              className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-full shadow-md hover:shadow-lg transition-all"
+            >
+              <ShoppingCart className="w-4 h-4" />
+              {cart.length > 0 && (
+                <span className="text-xs font-bold">{cart.length}</span>
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
 
       <div className="relative h-[340px] overflow-hidden">
         <div

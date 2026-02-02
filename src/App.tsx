@@ -21,8 +21,12 @@ function App() {
     }
   }, [tg]);
 
+  const minHeight = tg?.viewportStableHeight 
+    ? `${tg.viewportStableHeight}px` 
+    : '100vh';
+
   return (
-    <div className="App min-h-screen bg-gray-50 pb-20">
+    <div style={{ minHeight, width: '100%' }} className="bg-gray-50">
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/catalog" element={<CatalogPage />} />
@@ -31,7 +35,7 @@ function App() {
         <Route path="/order" element={<OrderPage />} />
         <Route path="/order/:id" element={<OrderPage />} />
         <Route path="/my-orders" element={<MyOrdersPage />} />
-        <Route path="/success" element={<SuccessPage />} />
+        <Route path="/success/:orderId" element={<SuccessPage />} />
         <Route path="/style/:id" element={<StylePage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
