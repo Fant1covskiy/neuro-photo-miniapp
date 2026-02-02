@@ -9,7 +9,6 @@ import SuccessPage from './pages/SuccessPage';
 import UploadPage from './pages/UploadPage';
 import StylePage from './pages/StylePage';
 import { useTelegram } from './hooks/useTelegram';
-import './App.css';
 
 function App() {
   const { tg } = useTelegram();

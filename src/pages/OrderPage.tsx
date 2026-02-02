@@ -18,6 +18,19 @@ function dataUrlToFile(dataUrl: string, name: string) {
   return new File([arr], name, { type: mime });
 }
 
+function extractDeepLink(qrUrl: string): string {
+  try {
+    const url = new URL(qrUrl);
+    const linkParam = url.searchParams.get('link');
+    if (linkParam) {
+      return decodeURIComponent(linkParam);
+    }
+    return qrUrl;
+  } catch {
+    return qrUrl;
+  }
+}
+
 export default function OrderPage() {
   const navigate = useNavigate();
   const { cart, totalPrice, clearCart } = useCart();
@@ -140,15 +153,17 @@ export default function OrderPage() {
   const openPaymentLink = () => {
     if (!qrCodeUrl) return;
 
+    const deepLink = extractDeepLink(qrCodeUrl);
+
     try {
       const tg = (window as any).Telegram?.WebApp;
       if (tg?.openLink) {
-        tg.openLink(qrCodeUrl);
+        tg.openLink(deepLink);
       } else {
-        window.open(qrCodeUrl, '_blank');
+        window.location.href = deepLink;
       }
     } catch {
-      window.location.href = qrCodeUrl;
+      window.location.href = deepLink;
     }
   };
 
