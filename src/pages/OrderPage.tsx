@@ -240,20 +240,20 @@ export default function OrderPage() {
               <QRCode value={qrCodeUrl} size={240} />
             </div>
 
-            <div className="w-full space-y-2 mt-4">
+            <div className="w-full space-y-3 mt-6">
               <button
                 onClick={openPaymentLink}
-                className="w-full py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:shadow-lg transition-all"
+                className="w-full py-5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-2xl font-bold text-lg flex items-center justify-center gap-3 hover:shadow-lg active:scale-98 transition-all"
               >
-                <ExternalLink className="w-5 h-5" />
+                <ExternalLink className="w-6 h-6" />
                 Открыть приложение банка
               </button>
 
               <button
                 onClick={copyToClipboard}
-                className="w-full py-3 bg-white border-2 border-gray-300 text-gray-700 rounded-xl font-semibold flex items-center justify-center gap-2 hover:bg-gray-50 transition-all"
+                className="w-full py-5 bg-white border-2 border-gray-300 text-gray-700 rounded-2xl font-bold text-lg flex items-center justify-center gap-3 hover:bg-gray-50 active:scale-98 transition-all"
               >
-                <Copy className="w-4 h-4" />
+                <Copy className="w-5 h-5" />
                 {copied ? 'Скопировано!' : 'Скопировать ссылку'}
               </button>
             </div>
