@@ -223,8 +223,23 @@ export default function OrderPage() {
 
             <button
               onClick={handleCreateOrderAndPay}
-              className="w-full py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-2xl font-bold text-lg shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={isPaying}
+              style={{ 
+                width: '100%',
+                padding: '20px 0',
+                background: isPaying 
+                  ? '#9ca3af' 
+                  : 'linear-gradient(to right, #4f46e5, #7c3aed)',
+                color: 'white',
+                borderRadius: '16px',
+                fontSize: '20px',
+                fontWeight: 'bold',
+                border: 'none',
+                boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
+                cursor: isPaying ? 'not-allowed' : 'pointer',
+                minHeight: '64px',
+                opacity: isPaying ? 0.5 : 1
+              }}
             >
               {isPaying ? 'Создаём заказ...' : 'Перейти к оплате через СБП'}
             </button>
@@ -240,20 +255,52 @@ export default function OrderPage() {
               <QRCode value={qrCodeUrl} size={240} />
             </div>
 
-            <div className="w-full space-y-3 mt-6">
+            <div className="w-full space-y-4 mt-6">
               <button
                 onClick={openPaymentLink}
-                className="w-full py-5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-2xl font-bold text-lg flex items-center justify-center gap-3 hover:shadow-lg active:scale-98 transition-all"
+                style={{ 
+                  width: '100%',
+                  padding: '20px 0',
+                  background: 'linear-gradient(to right, #4f46e5, #7c3aed)',
+                  color: 'white',
+                  borderRadius: '16px',
+                  fontSize: '20px',
+                  fontWeight: 'bold',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '12px',
+                  border: 'none',
+                  boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
+                  cursor: 'pointer',
+                  minHeight: '64px'
+                }}
               >
-                <ExternalLink className="w-6 h-6" />
+                <ExternalLink style={{ width: '28px', height: '28px' }} />
                 Открыть приложение банка
               </button>
 
               <button
                 onClick={copyToClipboard}
-                className="w-full py-5 bg-white border-2 border-gray-300 text-gray-700 rounded-2xl font-bold text-lg flex items-center justify-center gap-3 hover:bg-gray-50 active:scale-98 transition-all"
+                style={{ 
+                  width: '100%',
+                  padding: '20px 0',
+                  backgroundColor: 'white',
+                  color: '#374151',
+                  borderRadius: '16px',
+                  fontSize: '20px',
+                  fontWeight: 'bold',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '12px',
+                  border: '2px solid #d1d5db',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                  cursor: 'pointer',
+                  minHeight: '64px'
+                }}
               >
-                <Copy className="w-5 h-5" />
+                <Copy style={{ width: '24px', height: '24px' }} />
                 {copied ? 'Скопировано!' : 'Скопировать ссылку'}
               </button>
             </div>
