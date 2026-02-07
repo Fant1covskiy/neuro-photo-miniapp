@@ -49,14 +49,16 @@ export default function CartPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 pb-48">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50" style={{ paddingBottom: '140px' }}>
       <div className="sticky top-0 z-50 bg-white shadow-sm">
         <div className="flex items-center gap-3 px-4 py-3">
           <button onClick={() => navigate(-1)} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
             <ChevronLeft className="w-6 h-6 text-gray-800" />
           </button>
           <h1 className="text-xl font-bold text-gray-800">Корзина</h1>
-          <span className="ml-auto bg-purple-600 text-white text-sm font-bold px-3 py-1 rounded-full">{cart.length}</span>
+          <span className="ml-auto bg-purple-600 text-white text-sm font-bold px-4 py-2 rounded-xl min-w-[44px] text-center">
+            {cart.length}
+          </span>
         </div>
       </div>
 
@@ -90,20 +92,31 @@ export default function CartPage() {
         </div>
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-2xl">
-        <div className="p-6">
-          <div className="flex items-baseline justify-center gap-2 mb-6">
-            <span className="text-gray-600 font-medium text-lg">Итого:</span>
-            <span className="text-4xl font-bold text-purple-600">{Number(totalPrice || 0).toFixed(2)} ₽</span>
-          </div>
-          <div className="flex justify-center">
-            <button
-              onClick={handleCheckout}
-              className="w-full max-w-md py-6 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-2xl font-bold text-xl shadow-2xl hover:shadow-3xl transition-all hover:scale-[1.02] active:scale-[0.98]"
-            >
-              Перейти к загрузке фото
-            </button>
-          </div>
+      <div className="fixed bottom-0 left-0 right-0 bg-white shadow-2xl" style={{ padding: '20px 16px', borderTop: '2px solid #e5e7eb' }}>
+        <div className="flex items-baseline justify-center gap-2 mb-6">
+          <span className="text-gray-600 font-medium text-lg">Итого:</span>
+          <span className="text-4xl font-bold text-purple-600">{Number(totalPrice || 0).toFixed(2)} ₽</span>
+        </div>
+        <div className="flex justify-center">
+          <button
+            onClick={handleCheckout}
+            style={{ 
+              width: '100%',
+              maxWidth: '500px',
+              padding: '20px 0',
+              background: 'linear-gradient(to right, #4f46e5, #7c3aed)',
+              color: 'white',
+              borderRadius: '16px',
+              fontSize: '20px',
+              fontWeight: 'bold',
+              border: 'none',
+              boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
+              cursor: 'pointer',
+              minHeight: '64px'
+            }}
+          >
+            Перейти к загрузке фото
+          </button>
         </div>
       </div>
     </div>
