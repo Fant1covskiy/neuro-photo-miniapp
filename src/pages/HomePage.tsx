@@ -5,6 +5,11 @@ import { useCart } from '../context/CartContext';
 import { useTelegram } from '../hooks/useTelegram';
 import apiClient from '../api/client';
 
+interface Category {
+  id: number;
+  name: string;
+}
+
 interface Style {
   id: number;
   name: string;
@@ -12,6 +17,7 @@ interface Style {
   price: number;
   preview_image: string[] | null;
   category_id: number;
+  category?: Category;
 }
 
 const PLACEHOLDER_IMAGES = [
@@ -129,20 +135,20 @@ export default function HomePage() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => navigate('/my-orders')}
-              className="flex items-center gap-1.5 px-3 py-2 bg-white border border-gray-300 rounded-full shadow-sm hover:shadow-md transition-all"
+              className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-full shadow-sm hover:shadow-md transition-all"
             >
-              <Package className="w-4 h-4 text-gray-700" />
-              <span className="text-xs font-semibold text-gray-700">Мои заказы</span>
+              <Package className="w-5 h-5 text-gray-700" />
+              <span className="text-sm font-bold text-gray-700">Мои заказы</span>
             </button>
 
             <button
               onClick={() => navigate('/cart')}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-full shadow-md hover:shadow-lg transition-all"
+              className="flex items-center gap-2 px-5 py-2 bg-blue-600 text-white rounded-full shadow-md hover:shadow-lg transition-all"
             >
               <ShoppingCart className="w-5 h-5" />
               <span className="text-sm font-bold">Корзина</span>
               {cart.length > 0 && (
-                <span className="bg-white text-blue-600 text-xs font-bold px-2 py-0.5 rounded-full min-w-[24px] text-center">
+                <span className="bg-white text-blue-600 text-xs font-bold px-2.5 py-1 rounded-full min-w-[28px] text-center">
                   {cart.length}
                 </span>
               )}
@@ -178,12 +184,12 @@ export default function HomePage() {
                   value={searchQuery}
                   onChange={(e) => handleSearchChange(e.target.value)}
                   onFocus={() => searchQuery && setShowSuggestions(true)}
-                  className="flex-1 h-10 px-4 bg-white/95 backdrop-blur-sm rounded-full border border-white/50 focus:border-white focus:outline-none shadow-lg text-gray-800 placeholder-gray-400 text-sm"
+                  className="flex-1 h-12 px-4 bg-white/95 backdrop-blur-sm rounded-full border border-white/50 focus:border-white focus:outline-none shadow-lg text-gray-800 placeholder-gray-400 text-sm"
                 />
 
                 <button
                   type="submit"
-                  className="h-10 px-4 bg-blue-600 text-white rounded-full font-semibold text-sm shadow-lg hover:bg-blue-700 active:scale-[0.97] transition-all whitespace-nowrap"
+                  className="h-12 px-5 bg-blue-600 text-white rounded-full font-semibold text-sm shadow-lg hover:bg-blue-700 active:scale-[0.97] transition-all whitespace-nowrap"
                 >
                   Выбрать стиль
                 </button>
@@ -262,11 +268,14 @@ export default function HomePage() {
                   />
                 </div>
 
-                <div className="px-3 py-2">
-                  <h3 className="font-bold text-sm text-gray-800 line-clamp-1 mb-0.5">
+                <div className="px-3 py-3">
+                  <h3 className="font-bold text-sm text-gray-800 line-clamp-1 mb-1">
                     {style.name}
                   </h3>
-                  <p className="text-gray-500 text-xs">от {style.price} ₽</p>
+                  {style.category && (
+                    <p className="text-xs text-gray-500 mb-2">{style.category.name}</p>
+                  )}
+                  <p className="text-blue-600 font-bold text-sm">от {style.price} ₽</p>
                 </div>
               </div>
             );
