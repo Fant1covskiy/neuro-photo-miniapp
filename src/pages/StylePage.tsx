@@ -150,7 +150,7 @@ export default function StylePage() {
         </div>
       </div>
     );
-  }
+  };
 
   const images = Array.isArray(style.preview_image)
     ? style.preview_image
@@ -159,7 +159,7 @@ export default function StylePage() {
     : [];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 pb-40">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 pb-32">
       <div className="sticky top-0 z-50 bg-white shadow-sm">
         <div className="flex items-center gap-3 px-4 py-3">
           <button
@@ -229,21 +229,21 @@ export default function StylePage() {
         </div>
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-gray-200 px-4 py-8 shadow-2xl">
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-5 shadow-2xl">
         {isInCart ? (
           <button
             onClick={() => navigate('/cart')}
-            className="w-full py-8 bg-green-600 text-white rounded-3xl font-bold text-2xl shadow-xl hover:shadow-2xl transition-all active:scale-[0.98] flex items-center justify-center gap-4"
+            className="w-full py-5 bg-green-600 text-white rounded-2xl font-bold text-lg shadow-xl hover:shadow-2xl transition-all active:scale-[0.98] flex items-center justify-center gap-3"
           >
-            <Check className="w-8 h-8" />
+            <Check className="w-6 h-6" />
             В корзине - Перейти к оформлению
           </button>
         ) : (
           <button
             onClick={handleAddToCart}
-            className="w-full py-8 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-3xl font-bold text-2xl shadow-xl hover:shadow-2xl transition-all active:scale-[0.98] flex items-center justify-center gap-4"
+            className="w-full py-5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-2xl font-bold text-lg shadow-xl hover:shadow-2xl transition-all active:scale-[0.98] flex items-center justify-center gap-3"
           >
-            <ShoppingCart className="w-8 h-8" />
+            <ShoppingCart className="w-6 h-6" />
             Добавить в корзину
           </button>
         )}
