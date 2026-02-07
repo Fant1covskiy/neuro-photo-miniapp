@@ -60,7 +60,7 @@ export default function UploadPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 pb-32">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50" style={{ paddingBottom: '140px' }}>
       <div className="sticky top-0 z-50 bg-white shadow-sm">
         <div className="flex items-center gap-3 px-4 py-3">
           <button onClick={() => navigate(-1)} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
@@ -127,11 +127,26 @@ export default function UploadPage() {
         </div>
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-2xl">
+      <div className="fixed bottom-0 left-0 right-0 bg-white shadow-2xl" style={{ padding: '20px 16px', borderTop: '2px solid #e5e7eb' }}>
         <button
           onClick={handleGoPay}
           disabled={previews.length === 0 || saving}
-          className="w-full py-4 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white rounded-2xl font-bold text-lg shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          style={{ 
+            width: '100%',
+            padding: '20px 0',
+            background: previews.length === 0 || saving 
+              ? '#9ca3af' 
+              : 'linear-gradient(to right, #4f46e5, #7c3aed, #ec4899)',
+            color: 'white',
+            borderRadius: '16px',
+            fontSize: '20px',
+            fontWeight: 'bold',
+            border: 'none',
+            boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
+            cursor: previews.length === 0 || saving ? 'not-allowed' : 'pointer',
+            minHeight: '64px',
+            opacity: previews.length === 0 || saving ? 0.5 : 1
+          }}
         >
           {saving ? 'Подготовка...' : 'Перейти к оплате'}
         </button>
