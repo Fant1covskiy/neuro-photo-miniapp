@@ -59,8 +59,8 @@ function SwipeImage({
 
   if (images.length === 0) {
     return (
-      <div className="w-full bg-black flex items-center justify-center select-none">
-        <div className="w-full h-auto max-h-[360px] bg-gray-800" />
+      <div className="w-full bg-gray-100 flex items-center justify-center select-none">
+        <div className="w-full h-auto max-h-[500px] bg-gray-200" />
       </div>
     );
   }
@@ -68,7 +68,7 @@ function SwipeImage({
   return (
     <>
       <div
-        className="w-full bg-black flex items-center justify-center select-none"
+        className="w-full bg-white flex items-center justify-center select-none"
         onMouseDown={(e) => handlePointerDown(e.clientX)}
         onMouseMove={() => handlePointerMove()}
         onMouseUp={(e) => handlePointerUp(e.clientX)}
@@ -83,7 +83,7 @@ function SwipeImage({
         <img
           src={images[currentIndex]}
           alt={title}
-          className="w-full h-auto max-h-[360px] object-contain"
+          className="w-full h-auto max-h-[500px] object-contain"
         />
       </div>
 
@@ -159,7 +159,7 @@ export default function StylePage() {
     : [];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 pb-32">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 pb-28">
       <div className="sticky top-0 z-50 bg-white shadow-sm">
         <div className="flex items-center gap-3 px-4 py-3">
           <button
@@ -229,11 +229,11 @@ export default function StylePage() {
         </div>
       </div>
 
-      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 pb-6 px-4">
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-6 shadow-2xl">
         {isInCart ? (
           <button
             onClick={() => navigate('/cart')}
-            className="px-16 py-4 bg-green-600 text-white rounded-full font-bold text-lg shadow-xl hover:shadow-2xl transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-3 whitespace-nowrap"
+            className="w-full py-6 bg-green-600 text-white rounded-2xl font-bold text-xl shadow-xl hover:shadow-2xl transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-3"
           >
             <Check className="w-6 h-6" />
             В корзине - Перейти к оформлению
@@ -241,7 +241,7 @@ export default function StylePage() {
         ) : (
           <button
             onClick={handleAddToCart}
-            className="px-16 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-full font-bold text-lg shadow-xl hover:shadow-2xl transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-3 whitespace-nowrap"
+            className="w-full py-6 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-2xl font-bold text-xl shadow-xl hover:shadow-2xl transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-3"
           >
             <ShoppingCart className="w-6 h-6" />
             Добавить в корзину
