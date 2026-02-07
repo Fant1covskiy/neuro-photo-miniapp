@@ -159,7 +159,7 @@ export default function StylePage() {
     : [];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 pb-36">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50" style={{ paddingBottom: '140px' }}>
       <div className="sticky top-0 z-50 bg-white shadow-sm">
         <div className="flex items-center gap-3 px-4 py-3">
           <button
@@ -229,21 +229,53 @@ export default function StylePage() {
         </div>
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-6 shadow-2xl">
+      <div className="fixed bottom-0 left-0 right-0 bg-white shadow-2xl" style={{ padding: '20px 16px', borderTop: '2px solid #e5e7eb' }}>
         {isInCart ? (
           <button
             onClick={() => navigate('/cart')}
-            className="w-full py-6 bg-green-600 text-white rounded-2xl font-bold text-xl shadow-xl hover:shadow-2xl transition-all active:scale-[0.98] flex items-center justify-center gap-3"
+            style={{ 
+              width: '100%',
+              padding: '20px 0',
+              backgroundColor: '#16a34a',
+              color: 'white',
+              borderRadius: '16px',
+              fontSize: '20px',
+              fontWeight: 'bold',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '12px',
+              border: 'none',
+              boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
+              cursor: 'pointer',
+              minHeight: '64px'
+            }}
           >
-            <Check className="w-7 h-7" />
+            <Check style={{ width: '28px', height: '28px' }} />
             В корзине - Перейти к оформлению
           </button>
         ) : (
           <button
             onClick={handleAddToCart}
-            className="w-full py-6 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-2xl font-bold text-xl shadow-xl hover:shadow-2xl transition-all active:scale-[0.98] flex items-center justify-center gap-3"
+            style={{ 
+              width: '100%',
+              padding: '20px 0',
+              background: 'linear-gradient(to right, #4f46e5, #7c3aed)',
+              color: 'white',
+              borderRadius: '16px',
+              fontSize: '20px',
+              fontWeight: 'bold',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '12px',
+              border: 'none',
+              boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
+              cursor: 'pointer',
+              minHeight: '64px'
+            }}
           >
-            <ShoppingCart className="w-7 h-7" />
+            <ShoppingCart style={{ width: '28px', height: '28px' }} />
             Добавить в корзину
           </button>
         )}
