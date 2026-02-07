@@ -137,11 +137,14 @@ export default function HomePage() {
 
             <button
               onClick={() => navigate('/cart')}
-              className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-full shadow-md hover:shadow-lg transition-all"
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-full shadow-md hover:shadow-lg transition-all"
             >
-              <ShoppingCart className="w-4 h-4" />
+              <ShoppingCart className="w-5 h-5" />
+              <span className="text-sm font-bold">Корзина</span>
               {cart.length > 0 && (
-                <span className="text-xs font-bold">{cart.length}</span>
+                <span className="bg-white text-blue-600 text-xs font-bold px-2 py-0.5 rounded-full min-w-[24px] text-center">
+                  {cart.length}
+                </span>
               )}
             </button>
           </div>

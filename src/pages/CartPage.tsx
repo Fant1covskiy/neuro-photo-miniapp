@@ -39,7 +39,7 @@ export default function CartPage() {
           <p className="text-gray-600 text-center mb-8">Добавьте стили, чтобы оформить заказ</p>
           <button
             onClick={() => navigate('/catalog')}
-            className="px-8 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-bold shadow-lg hover:shadow-xl transition-all"
+            className="px-10 py-5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-2xl font-bold text-lg shadow-lg hover:shadow-xl active:scale-98 transition-all"
           >
             Перейти в каталог
           </button>
@@ -92,14 +92,14 @@ export default function CartPage() {
 
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-2xl">
         <div className="p-6">
-          <div className="flex items-baseline justify-center gap-2 mb-5">
+          <div className="flex items-baseline justify-center gap-2 mb-6">
             <span className="text-gray-600 font-medium text-lg">Итого:</span>
             <span className="text-4xl font-bold text-purple-600">{Number(totalPrice || 0).toFixed(2)} ₽</span>
           </div>
           <div className="flex justify-center">
             <button
               onClick={handleCheckout}
-              className="w-full max-w-md py-5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-2xl font-bold text-xl shadow-2xl hover:shadow-3xl transition-all hover:scale-[1.02] active:scale-[0.98]"
+              className="w-full max-w-md py-6 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-2xl font-bold text-xl shadow-2xl hover:shadow-3xl transition-all hover:scale-[1.02] active:scale-[0.98]"
             >
               Перейти к загрузке фото
             </button>
